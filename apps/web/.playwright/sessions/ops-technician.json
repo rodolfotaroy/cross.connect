@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "authjs.csrf-token",
+      "value": "371d77d5b39478e4f1b63658b3b941e45f575fae3f01cbd7c6825b449dad317a%7C3886c8b14b7de6fbe5780d3c20d48f97a50afbe26609c017f77b8bcd249d9e65",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.callback-url",
+      "value": "http%3A%2F%2F192.168.1.3%3A3210",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoieWFWYTg1aWRIZThUblJmWDJpZ3VtZWRNdTFWUkRVNG1tRmNpTE1YRGNpUW0yNHJtMEVTeUNrSUFnbF9rYnBBdDU0ZkE4SDI2UDl1dFgtOHVMU0pKeHcifQ..eHEoDsnZk3RGr4GSTWcEFA.tsJNacJ6zkEN6w3mz3qUtMfP9_nxNYaD_E_D6pltXkapi2vlNjTOQBIAL_tLZqOXKCr8k9Pstb8AAza5-LiQ7KUPtFbioW5caS5hUa-IWRCTjGBeiVFEjGdmJaP_0OFQmoDa2bZrswuxJUZ0JEHSzLXlg8PSugrstn9FZBYi95fVhx4VQoUS32Yw6g96Ndqv-qcb-23FOQHsG7UHAycNS4NKh1DxyRM_4EgMuyzmYpEVteg9aLRKxSC0wsmn0utmnSyWfFiSY2-V9Doc-2e3kXU0F9yqcHi3RMDrAe_6rIbS07bfUvlKTn-Qu8gaKSMca5DZG7w9ezpT9eQCAP1C0NX9PuQIrQCpYJ2RWi8D1bx8iWa3WUetSuJhL6HiW6EgAGF5HGr-76CoLHl6bwNKwcFjOIbizm3WawGKpGApuPlSefDXjP3f8QPrSujSLqiMXIfkNVosh7hFjICpgkJYj8huo8mJ-qalVxgIpuJwUAHrujbQnsYHKPyqIWDlgbT005BNf48tXlofMctiWOXbjOAwfPnGpopgy552qlxUQ_loT0kwhAOE2GC2bGpn_345kbTSklb3sOHHOVxvTeDnYpUO3BIZh6bkejBu_KqQnt-kzKbVjowkl-8iPTcciSGndXVhZfwdXk792M4k8ilk0Ogthyw9WB66fpIs2cxdG2UMss9bNxATEolcXF4EbKZflmzdSf_qx7h6IT0yWpZwLm_sknj4uZbsadJvGt8EM0Cd6IbBKkx12V0BNGY8eyxRf5DEQgzXD7jwiGgiAOGXD4830w9kt-OLxaHXUQoFNdhHkDyXDWhaP5zEuMj0rvESZk7tfSZ_zWKhNUEfJrhGye9a9v3hFrW95Mpqo7UIs62Mjy_bP7_LNE_X4-fKztlCQ3tua2GC_-mbej0Tl1wfocsU4YVWFA2v1ao-qP5iCOzVk-bOl9qXp0uszaYYUkiLMizbptwTNx5rfJCbUgUEjXIw-dei0P9n4Mk2MNDTqsiVmgcUtX6_4XaQr21_krTPD7HgpN5l_jr90KDF9T7nQAbESjZI7MmFsXppKoVW7o2PeC_QzgEjaFiSd63EXetN0hT6dvO7xGavHBusxEgVja1sur5Ni69uk_GQY2OF2Dq4ISsSX4tbUyAf6uKuWdQHLeboAmdba8-zqRuN-ggk03VWcmV7tdIvOKE1R4Xq2U2g2yQmei1ZvVQZ0dXnngMbPBYQvZb22CY8Mh4UD3SHqA.YWcgCqzjGVONip2gcdtc7p5Ydt86zsnkv3Xsyw1Dvw8",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1777298132.209147,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

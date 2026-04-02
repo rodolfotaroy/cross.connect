@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Prisma generated
+packages/db/src/generated/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+!.env.example
+!apps/**/.env.example
+
+# Turbo cache
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+playwright-report/
+test-results/
+
+# Uploads
+tmp/
+uploads/

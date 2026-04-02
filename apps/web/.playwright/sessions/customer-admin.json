@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "authjs.csrf-token",
+      "value": "27e4a9f6689a977ac4b4d446f6b7129eba4f87131e975c126b7cdd6685352f1c%7C9df53c3c9433c851c6e56319017fc47700a086be3c861b7fc6715f49cfdbc675",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.callback-url",
+      "value": "http%3A%2F%2F192.168.1.3%3A3210",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoieWFWYTg1aWRIZThUblJmWDJpZ3VtZWRNdTFWUkRVNG1tRmNpTE1YRGNpUW0yNHJtMEVTeUNrSUFnbF9rYnBBdDU0ZkE4SDI2UDl1dFgtOHVMU0pKeHcifQ..IrX5YGvFvYLREAq11DUbfA.5cfY-Tzr1q1Plo1zPIgMJnJ9J56d_M5t8XgQKzCjcJhFR73JyjMI8iLMujC5FuwveeXhuzFW0oJFo_uhLqW-SX4PDo10k75RlMXJCIJMfDeuWlD9Yvx2dqCkZZZAZwAaFPgmqz5PXJgXykEbokYfG6R3ed2PrlOrI6TK6ZIMHuqmtXO_1sfcrCWtG2FjSXa4S2TrYh_bO8AeC6qc8PdpiEw6-e_3sbzGXdzAsi3WAX-dtQHwYDeR4CxuVLsVXdhrqznHCE0pWb0g1OYPdpjnv9S8rzmnOV3simsoFg9vvSQ7_GoclS33JByunlspYQ8C_PO91kFsAAf9WM0mI18HupkjaCUAQDGEWQ3ohZ5p852rSJTxz0RYU4E82D0wMso91WMQ2orEC3HEBnpf3eUF_oMXaZRUMKJVzZ2Wjf2Oiq9RkgTQaAQ-nhTPIplLyl62hsaaYg3LwxKynyIG7tr_vuhpEpfm4ZcORdp_mz1T4AKwZxMK6OHWtxnv3dgSBtp7Q2PBLxfH-5r0rLgGEtYQ3awR09aW-PziKDDvaD16YNsQPn-x5V3bS76prBf8M_Gsmas-ZlQS-F9HjGdLd5qWKtEORE9UHQhCURFnjsxvlS8MFUX8p1w7kKwJhIj8u4lyRObTGe95bHoRtgQEdULvVxQ8kvF8Yo_FsY-Sn2rbQdKBGgBORrSXE7_izXzpZHqdNmkg4mhHfJL_G90WpnagxsEgsETLzInyW-HHpbqxnzYi870q37ywvAVkcSUdVqgPaTpXN3puvsKCA6Z6RzOAAFMd59DHekPPn2aJbmUGPGUuHJkNvSMxMksQCsofLQYgZoXO3W0jsLjALfLteNqZxUNDCNa5f7U0IHwM5KWqKstY0agLWFc9zzZlLGTwvif0go7UvzQ3EoVWoLVAUuDce9U7O0x2ylzPYOYBxPHaqzOiZxngU6tSuEV4bNkjWXKglTBkXvRfC3dElYqQvCAWmOQS5fZBw7-LmSNHlBh6B7mezt8RudE8CPWOUkTami1taL7NgqnU_OwM-eNY_N-v4zfmLgU8kKkAgDvraTI-jheS6KFrwhuAcmU2A0A5FteBgr_qP-7YNHpOF9oMWfhHPfzCFxz9_7-u2p2C8WbnYli8d-inCFMIMXHLlBYbHGIBuznu-b1BB0X5K9HisS91AN3vecuvl9cNmc6gO6oGVBeitEI6-Gwgy5xGM9PfcyEh.0-s4gY4Zor_cyJ-L_0nc3iMxBBpGkqYC7R4sGd4aT_4",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1777298132.859224,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

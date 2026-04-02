@@ -1,0 +1,32 @@
+{
+  "name": "cross-connect",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test:unit": "turbo test:unit",
+    "test:e2e": "turbo test:e2e",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,prisma}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md,prisma}\"",
+    "db:generate": "pnpm --filter @xc/db db:generate",
+    "db:migrate:dev": "pnpm --filter @xc/db migrate:dev",
+    "db:migrate:prod": "pnpm --filter @xc/db migrate:deploy",
+    "db:seed": "pnpm --filter @xc/db seed",
+    "db:studio": "pnpm --filter @xc/db studio",
+    "db:reset": "pnpm --filter @xc/db migrate:reset"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "prettier": "^3.5.0",
+    "prettier-plugin-prisma": "^5.0.0",
+    "turbo": "^2.3.3",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

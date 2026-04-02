@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide NextAuth v5 dev overlay button (not needed in this app) */
+[data-nextauth-csrf-token],
+nextjs-portal {
+  display: none !important;
+}

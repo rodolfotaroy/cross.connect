@@ -1,0 +1,121 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: xc_user
+      POSTGRES_PASSWORD: xc_password
+      POSTGRES_DB: cross_connect
+    ports:
+      - '5434:5432' # host 5434 avoids conflict with any local PostgreSQL on 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U xc_user -d cross_connect']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '9000:9000'
+      - '9001:9001' # MinIO console: http://localhost:9001
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin;
+        mc mb --ignore-existing local/cross-connect-docs;
+        exit 0;
+      "
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://xc_user:xc_password@postgres:5432/cross_connect?schema=public
+      API_PORT: 3001
+      API_HOST: 0.0.0.0
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: cross-connect-docs
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      CORS_ORIGINS: http://localhost:3210,http://192.168.1.3:3210
+      JOBS_SCHEMA: xc_jobs
+      THROTTLE_TTL_SECONDS: 60
+      THROTTLE_LIMIT: 500
+    ports:
+      - '3100:3001'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "require(\"http\").get(\"http://localhost:3001/\", r => process.exit(0)).on(\"error\", () => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the JS bundle at build time — must match the host port
+        # that the user's browser uses to reach the API.
+        NEXT_PUBLIC_API_URL: http://192.168.1.3:3100
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      # Used by server-side Next.js code (next-auth) to reach the API container
+      # over the internal Docker network, bypassing the host port mapping.
+      API_INTERNAL_URL: http://api:3001
+      # next-auth v5 uses AUTH_SECRET and AUTH_URL (NEXTAUTH_* kept for compat)
+      AUTH_SECRET: ${NEXTAUTH_SECRET}
+      AUTH_URL: http://192.168.1.3:3210
+      AUTH_TRUST_HOST: 'true'
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: http://192.168.1.3:3210
+    ports:
+      - '3210:3000'
+
+volumes:
+  postgres_data:
+  minio_data:

@@ -1,0 +1,68 @@
+export declare const AuditAction: {
+    readonly ORDER_DRAFT_CREATED: "order.draft_created";
+    readonly ORDER_SUBMITTED: "order.submitted";
+    readonly ORDER_REVIEW_STARTED: "order.review_started";
+    readonly ORDER_FEASIBLE: "order.feasibility_passed";
+    readonly ORDER_APPROVAL_SENT: "order.approval_requested";
+    readonly ORDER_APPROVED: "order.approved";
+    readonly ORDER_REJECTED: "order.rejected";
+    readonly ORDER_CANCELLED: "order.cancelled";
+    readonly SERVICE_CREATED: "service.created";
+    readonly SERVICE_ACTIVATED: "service.activated";
+    readonly SERVICE_SUSPENDED: "service.suspended";
+    readonly SERVICE_RESUMED: "service.resumed";
+    readonly SERVICE_DISCONNECT_REQUESTED: "service.disconnect_requested";
+    readonly SERVICE_DISCONNECTED: "service.disconnected";
+    readonly SERVICE_PROVISIONING_ABORTED: "service.provisioning_aborted";
+    readonly SERVICE_EXPIRY_EXTENDED: "service.expiry_extended";
+    readonly PATH_PLANNED: "cable_path.planned";
+    readonly PATH_INSTALLED: "cable_path.installed";
+    readonly PATH_ACTIVATED: "cable_path.activated";
+    readonly PATH_REROUTE_STARTED: "cable_path.reroute_initiated";
+    readonly PATH_DECOMMISSIONED: "cable_path.decommissioned";
+    readonly PORT_RESERVED: "port.reserved";
+    readonly PORT_ACTIVATED: "port.activated";
+    readonly PORT_RELEASED: "port.released";
+    readonly PORT_RESERVATION_CANCELLED: "port.reservation_cancelled";
+    readonly PORT_FAULT_RAISED: "port.fault_raised";
+    readonly PORT_FAULT_REPAIRED: "port.fault_repaired";
+    readonly PORT_MAINTENANCE_STARTED: "port.maintenance_started";
+    readonly PORT_MAINTENANCE_ENDED: "port.maintenance_ended";
+    readonly PORT_DECOMMISSIONED: "port.decommissioned";
+    readonly RESERVATION_CREATED: "port_reservation.created";
+    readonly RESERVATION_RELEASED: "port_reservation.released";
+    readonly RESERVATION_CANCELLED: "port_reservation.cancelled";
+    readonly WO_CREATED: "work_order.created";
+    readonly WO_ASSIGNED: "work_order.assigned";
+    readonly WO_STARTED: "work_order.started";
+    readonly WO_PENDING_TEST: "work_order.pending_test";
+    readonly WO_COMPLETED: "work_order.completed";
+    readonly WO_CANCELLED: "work_order.cancelled";
+    readonly WO_TASK_COMPLETED: "work_order.task_completed";
+    readonly APPROVAL_REQUESTED: "approval.requested";
+    readonly APPROVAL_APPROVED: "approval.approved";
+    readonly APPROVAL_REJECTED: "approval.rejected";
+    readonly APPROVAL_DEFERRED: "approval.deferred";
+    readonly APPROVAL_ESCALATED: "approval.escalated";
+    readonly DOCUMENT_UPLOADED: "document.uploaded";
+    readonly DOCUMENT_DELETED: "document.deleted";
+};
+export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
+export declare const BILLING_TRIGGER_ACTIONS: Set<AuditAction>;
+export interface TransitionContext<TEntity = unknown> {
+    entity: TEntity;
+    actorId?: string;
+    actorRole?: string;
+    payload?: Record<string, unknown>;
+}
+export interface TransitionDef<S extends string, TEntity = unknown> {
+    from: S | readonly S[];
+    to: S;
+    description: string;
+    guard?: (ctx: TransitionContext<TEntity>) => void | Promise<void>;
+}
+export declare const ORDER_TERMINAL_STATES: readonly ["approved", "rejected", "cancelled"];
+export declare const SERVICE_TERMINAL_STATES: readonly ["disconnected"];
+export declare const PATH_TERMINAL_STATES: readonly ["decommissioned"];
+export declare const WO_TERMINAL_STATES: readonly ["completed", "cancelled"];
+export declare const PORT_TERMINAL_STATES: readonly ["decommissioned"];

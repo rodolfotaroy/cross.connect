@@ -1,0 +1,8 @@
+node_modules
+dist
+.next
+build
+coverage
+packages/db/src/generated
+*.lock
+pnpm-lock.yaml

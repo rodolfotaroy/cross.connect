@@ -1,0 +1,986 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SCHEMA VERSION NOTES
+//
+// Layer 1 — Identity:       Organization, User
+// Layer 2 — Location:       Site → Building → Room → Cage → Rack → Panel → Port
+//                           Room → Panel (MMR direct mounts)
+// Layer 3 — Physical infra: DemarcPoint, Pathway (Phase 2 data)
+// Layer 4 — Service:        CrossConnectOrder, OrderEndpoint (immutable intent)
+//                           CrossConnectService, ServiceEndpoint (ops-assigned)
+// Layer 5 — Physical impl:  CablePath, PathSegment, PortReservation
+// Layer 6 — Operations:     ApprovalRequest, ApprovalStep, WorkOrder, WorkOrderTask
+// Layer 7 — Cross-cutting:  Document, BillingTriggerEvent, AuditEvent
+//
+// POST-MVP (schemas excluded — add in Phase 2 without breaking changes):
+//   Floor, Cable, CableSegment, MaintenanceWindow, SlaRecord, NotificationRule
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ENUMS
+// ══════════════════════════════════════════════════════════════════════════════
+
+enum OrgType {
+  operator
+  customer
+  carrier
+  cloud_provider
+  exchange
+}
+
+enum UserRole {
+  super_admin
+  ops_manager
+  ops_technician
+  customer_admin
+  customer_orderer
+  customer_viewer
+}
+
+enum MediaType {
+  smf
+  mmf
+  cat6
+  coax
+  dac
+}
+
+enum ConnectorType {
+  lc
+  sc
+  mtp_mpo
+  rj45
+  fc
+}
+
+enum StrandRole {
+  tx
+  rx
+  unspecified
+}
+
+enum PortState {
+  available
+  reserved
+  in_use
+  faulty
+  maintenance
+  decommissioned
+}
+
+enum RoomType {
+  standard
+  mmr
+  telco_closet
+  common_area
+}
+
+enum PanelType {
+  patch_panel
+  odf
+  fdf
+  demarc
+  splice_enclosure
+}
+
+// DemarcType classifies which party and purpose a DemarcPoint represents.
+enum DemarcType {
+  customer
+  carrier
+  cloud_onramp
+  exchange
+  internal
+}
+
+// PathwayType describes the physical infrastructure between rooms.
+// Schema included now; data populated in Phase 2.
+enum PathwayType {
+  conduit
+  cable_tray
+  subduct
+  inner_duct
+  bundle
+  overhead
+}
+
+enum OrderState {
+  draft
+  submitted
+  under_review // ops feasibility check phase
+  pending_approval // feasibility passed; awaiting manager approval
+  approved
+  rejected
+  cancelled
+}
+
+enum ServiceType {
+  customer_to_carrier
+  customer_to_customer
+  customer_to_cloud
+  exchange
+}
+
+enum ServiceState {
+  provisioning
+  active
+  suspended
+  pending_disconnect
+  disconnected
+}
+
+enum EndpointSide {
+  a_side
+  z_side
+}
+
+enum EndpointType {
+  customer
+  carrier
+  cloud_onramp
+  exchange
+  internal
+}
+
+enum PathRole {
+  primary
+  diverse
+}
+
+enum PathState {
+  planned
+  installed
+  active
+  rerouting
+  decommissioned
+}
+
+enum SegmentType {
+  patch
+  trunk
+  jumper
+  demarc_extension
+}
+
+// ReservationState tracks the lifecycle of an explicit PortReservation record.
+enum ReservationState {
+  active
+  released
+  cancelled
+}
+
+enum WorkOrderType {
+  install
+  disconnect
+  reroute
+  repair
+  audit_check
+}
+
+enum WorkOrderState {
+  created
+  assigned
+  in_progress
+  pending_test
+  completed
+  cancelled
+}
+
+enum WorkOrderTaskState {
+  pending
+  in_progress
+  completed
+  skipped
+}
+
+enum ApprovalDecision {
+  approved
+  rejected
+  deferred
+}
+
+enum ApprovalState {
+  pending
+  decided
+}
+
+enum DocumentType {
+  loa
+  cfa
+  test_result
+  photo
+  drawing
+  other
+}
+
+enum BillingEventType {
+  service_activated
+  service_disconnected
+  temporary_extended
+  reroute_completed
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 1 — IDENTITY
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Organization owns Users and may be a customer, carrier, operator, etc.
+// A single platform deployment has one operator org; all others are tenants.
+model Organization {
+  id           String  @id @default(cuid())
+  name         String
+  code         String  @unique // short alphanumeric identifier: "ACME", "AT-T", "AWS"
+  orgType      OrgType
+  isActive     Boolean @default(true)
+  contactEmail String?
+  contactPhone String?
+  notes        String?
+
+  users            User[]
+  ordersRequested  CrossConnectOrder[]
+  orderEndpoints   OrderEndpoint[]
+  serviceEndpoints ServiceEndpoint[]
+  demarcPoints     DemarcPoint[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgType])
+  @@index([isActive])
+}
+
+// User belongs to exactly one Organization.
+// Role enforces what the user can see and do across the platform.
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole
+  orgId        String
+  org          Organization @relation(fields: [orgId], references: [id])
+  isActive     Boolean      @default(true)
+  lastLoginAt  DateTime?
+
+  ordersSubmitted    CrossConnectOrder[] @relation("OrderSubmittedBy")
+  ordersApproved     CrossConnectOrder[] @relation("OrderApprovedBy")
+  workOrdersAssigned WorkOrder[]
+  approvalSteps      ApprovalStep[]
+  portReservations   PortReservation[]
+  auditEvents        AuditEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+  @@index([role])
+  @@index([isActive])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 2 — LOCATION HIERARCHY
+// Site → Building → Room → Cage → Rack → Panel → Port
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Site: a datacenter campus. May span multiple buildings.
+// Renamed from "Datacenter" — a campus may have several physical buildings.
+model Site {
+  id       String  @id @default(cuid())
+  name     String
+  code     String  @unique // "DC1", "IAD-1", "SV5"
+  address  String
+  city     String
+  state    String? // US state or province
+  country  String // ISO 3166-1 alpha-2
+  timezone String  @default("UTC")
+  isActive Boolean @default(true)
+  notes    String?
+
+  buildings Building[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// Building: a physical structure at a Site.
+// In single-building DCs, create one Building per Site.
+model Building {
+  id       String  @id @default(cuid())
+  siteId   String
+  site     Site    @relation(fields: [siteId], references: [id])
+  name     String
+  code     String // "BLDG-A", "NORTH", "MAIN"
+  isActive Boolean @default(true)
+  notes    String?
+
+  rooms Room[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([siteId, code])
+  @@index([siteId])
+}
+
+// Room: a discrete physical space — customer suite, MMR, telco closet.
+// MMRs hold ODF/FDF panels directly, with no customer cages.
+// roomType drives business rules (e.g., only mmr rooms host carrier demarcPoints).
+// floor is freeform ("1", "B1", "M") — a dedicated Floor entity is deferred to Phase 2.
+model Room {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id])
+  name       String
+  code       String // "SUITE-4", "MMR-1", "TC-B1"
+  roomType   RoomType
+  floor      String? // freeform floor identifier
+  isActive   Boolean  @default(true)
+  notes      String?
+
+  cages        Cage[]
+  racks        Rack[] // standalone racks (not in a cage)
+  panels       Panel[] // direct-mount panels (MMR ODF frames, carrier demarcs)
+  demarcPoints DemarcPoint[]
+
+  pathwaysFrom Pathway[] @relation("PathwayFromRoom")
+  pathwaysTo   Pathway[] @relation("PathwayToRoom")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([buildingId, code])
+  @@index([buildingId])
+  @@index([roomType])
+}
+
+// Cage: a customer-owned or co-lo cage within a Room.
+// ownerOrgId enables cage-level authorization checks.
+model Cage {
+  id         String  @id @default(cuid())
+  roomId     String
+  room       Room    @relation(fields: [roomId], references: [id])
+  name       String
+  code       String
+  ownerOrgId String? // org that leases this cage; null = operator-owned
+  isActive   Boolean @default(true)
+  notes      String?
+
+  racks Rack[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, code])
+  @@index([roomId])
+  @@index([ownerOrgId])
+}
+
+// Rack: an equipment rack within a Cage or directly in a Room.
+// Exactly one of cageId (cage-mounted) or roomId (room-level) must be set.
+// Code uniqueness within its parent is enforced at the application layer.
+model Rack {
+  id     String @id @default(cuid())
+  cageId String? // null = room-level rack (not in a cage)
+  cage   Cage?   @relation(fields: [cageId], references: [id])
+  roomId String? // null = cage-level rack; set directly for room-level racks
+  room   Room?   @relation(fields: [roomId], references: [id])
+  name     String
+  code     String
+  uSize    Int     @default(42)
+  isActive Boolean @default(true)
+  notes    String?
+
+  panels Panel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cageId, code])
+  @@unique([roomId, code])
+  @@index([cageId])
+  @@index([roomId])
+}
+
+// Panel: a physical panel — patch panel, ODF, FDF, demarc strip, splice enclosure.
+// Exactly one of rackId (cage-mounted) or roomId (MMR direct-mount) must be set.
+// Code uniqueness within its parent is enforced at the application layer.
+model Panel {
+  id        String    @id @default(cuid())
+  rackId    String?
+  rack      Rack?     @relation(fields: [rackId], references: [id])
+  roomId    String?
+  room      Room?     @relation(fields: [roomId], references: [id])
+  name      String
+  code      String
+  panelType PanelType
+  portCount Int // total port/adapter count
+  uPosition Int? // rack U-slot number (1-based) when rack-mounted
+  isActive  Boolean   @default(true)
+  notes     String?
+
+  ports            Port[]
+  demarcPoints     DemarcPoint[]
+  desiredEndpoints OrderEndpoint[]   @relation("OrderDesiredPanel")
+  serviceEndpoints ServiceEndpoint[] @relation("ServiceAssignedPanel")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([rackId])
+  @@index([roomId])
+  @@index([panelType])
+}
+
+// Port: one physical fiber strand or copper pair.
+// Duplex LC cross-connect = two Port records (tx + rx) on the same panel.
+// position is an integer for reliable sort order independent of label format.
+// fiberTube/fiberStrand identify strands in ribbon fiber cables (Phase 2).
+model Port {
+  id            String        @id @default(cuid())
+  panelId       String
+  panel         Panel         @relation(fields: [panelId], references: [id])
+  label         String // "01", "A12", "T01" — human-readable face label
+  position      Int // integer for deterministic ordering
+  mediaType     MediaType
+  connectorType ConnectorType
+  strandRole    StrandRole    @default(unspecified)
+  fiberTube     Int? // tube number in ribbon cable (Phase 2)
+  fiberStrand   Int? // strand number within tube (Phase 2)
+  state         PortState     @default(available)
+  isActive      Boolean       @default(true)
+  notes         String?
+
+  reservations PortReservation[]
+  segmentsFrom PathSegment[]     @relation("SegmentFromPort")
+  segmentsTo   PathSegment[]     @relation("SegmentToPort")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([panelId, label])
+  @@index([panelId, state]) // most frequent query: "available ports on panel X"
+  @@index([state])
+  @@index([mediaType])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 3 — PHYSICAL INFRASTRUCTURE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// DemarcPoint: the physical handoff location between two responsible parties.
+// A carrier LOA/CFA references a specific DemarcPoint.
+// demarcType identifies which side of the handoff this represents.
+model DemarcPoint {
+  id             String       @id @default(cuid())
+  name           String // e.g. "AT&T MMR-1 ODF-03 Port 24"
+  demarcType     DemarcType
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  roomId  String?
+  room    Room?   @relation(fields: [roomId], references: [id])
+  panelId String?
+  panel   Panel?  @relation(fields: [panelId], references: [id])
+
+  loaReference String? // LOA document number
+  cfaReference String? // CFA (Connecting Facility Assignment) number
+  isActive     Boolean @default(true)
+  notes        String?
+
+  orderEndpoints   OrderEndpoint[]
+  serviceEndpoints ServiceEndpoint[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([demarcType])
+  @@index([roomId])
+  @@index([panelId])
+}
+
+// Pathway: physical cable infrastructure — conduit, cable tray, subduct, fiber duct.
+// Schema is included now; field data is populated in Phase 2.
+// PathSegment.pathwayId is optional so existing records are unaffected.
+model Pathway {
+  id          String      @id @default(cuid())
+  name        String
+  code        String      @unique // "CONDUIT-MMR1-SUITE4-01"
+  pathwayType PathwayType
+
+  fromRoomId String
+  fromRoom   Room   @relation("PathwayFromRoom", fields: [fromRoomId], references: [id])
+  toRoomId   String
+  toRoom     Room   @relation("PathwayToRoom", fields: [toRoomId], references: [id])
+
+  capacityStrandCount Int?
+  lengthMeters        Decimal?
+  isBidirectional     Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  notes               String?
+
+  pathSegments PathSegment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fromRoomId])
+  @@index([toRoomId])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 4 — SERVICE LAYER (commercial intent)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// CrossConnectOrder: the commercial request from a customer.
+// Core fields (serviceType, mediaType, endpoints) are IMMUTABLE after submission.
+// Only state-machine columns (state, approvedAt, rejectionReason, etc.) may change.
+model CrossConnectOrder {
+  id          String @id @default(cuid())
+  orderNumber String @unique // XCO-2026-00001
+
+  requestingOrgId String
+  requestingOrg   Organization @relation(fields: [requestingOrgId], references: [id])
+  submittedById   String
+  submittedBy     User         @relation("OrderSubmittedBy", fields: [submittedById], references: [id])
+
+  serviceType ServiceType
+  mediaType   MediaType
+  speedGbps   Decimal?
+  isTemporary Boolean     @default(false)
+
+  requestedActiveAt  DateTime?
+  requestedExpiresAt DateTime?
+
+  customerReference String?
+  notes             String?
+
+  state           OrderState @default(draft)
+  submittedAt     DateTime?
+  approvedById    String?
+  approvedBy      User?      @relation("OrderApprovedBy", fields: [approvedById], references: [id])
+  approvedAt      DateTime?
+  rejectionReason String?
+  cancelledAt     DateTime?
+  cancelledReason String?
+
+  endpoints   OrderEndpoint[]
+  service     CrossConnectService?
+  approval    ApprovalRequest?
+  documents   Document[]
+  auditEvents AuditEvent[]         @relation("OrderAuditEvents")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requestingOrgId])
+  @@index([state])
+  @@index([submittedById])
+  @@index([submittedAt])
+  @@index([createdAt])
+}
+
+// OrderEndpoint: captures A-side and Z-side intent at order creation.
+// IMMUTABLE after submission — preserves the original customer request even if
+// ops assigns a different physical panel during provisioning.
+model OrderEndpoint {
+  id           String            @id @default(cuid())
+  orderId      String
+  order        CrossConnectOrder @relation(fields: [orderId], references: [id])
+  side         EndpointSide
+  endpointType EndpointType
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  desiredPanelId String?
+  desiredPanel   Panel?       @relation("OrderDesiredPanel", fields: [desiredPanelId], references: [id])
+  demarcPointId  String?
+  demarcPoint    DemarcPoint? @relation(fields: [demarcPointId], references: [id])
+
+  loaNumber         String?
+  cfaNumber         String?
+  demarcDescription String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, side])
+  @@index([orderId])
+  @@index([organizationId])
+  @@index([demarcPointId])
+}
+
+// CrossConnectService: the provisioned running service.
+// Created when an order is approved. Persists across reroutes and repairs.
+// It is the billing anchor. mediaType/speedGbps/serviceType are denormalized
+// here as billing snapshots to avoid joins in billing queries.
+model CrossConnectService {
+  id            String            @id @default(cuid())
+  serviceNumber String            @unique // XC-2026-00001
+  orderId       String            @unique
+  order         CrossConnectOrder @relation(fields: [orderId], references: [id])
+
+  state          ServiceState @default(provisioning)
+  activatedAt    DateTime?
+  disconnectedAt DateTime?
+
+  // Suspend lifecycle
+  suspendedAt     DateTime?
+  suspendedReason String?
+
+  // Disconnect request lifecycle
+  disconnectRequestedAt DateTime?
+  disconnectReason      String?
+
+  serviceType ServiceType
+  mediaType   MediaType
+  speedGbps   Decimal?
+
+  isTemporary Boolean   @default(false)
+  expiresAt   DateTime?
+
+  endpoints     ServiceEndpoint[]
+  cablePaths    CablePath[]
+  workOrders    WorkOrder[]
+  billingEvents BillingTriggerEvent[]
+  auditEvents   AuditEvent[]          @relation("ServiceAuditEvents")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([state])
+  @@index([isTemporary, expiresAt])
+  @@index([activatedAt])
+}
+
+// ServiceEndpoint: ops-assigned A/Z side of the running service.
+// Written during provisioning. May differ from OrderEndpoint.desiredPanel.
+model ServiceEndpoint {
+  id           String              @id @default(cuid())
+  serviceId    String
+  service      CrossConnectService @relation(fields: [serviceId], references: [id])
+  side         EndpointSide
+  endpointType EndpointType
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  assignedPanelId String?
+  assignedPanel   Panel?       @relation("ServiceAssignedPanel", fields: [assignedPanelId], references: [id])
+  demarcPointId   String?
+  demarcPoint     DemarcPoint? @relation(fields: [demarcPointId], references: [id])
+
+  verifiedLoaNumber String?
+  verifiedCfaNumber String?
+  demarcDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, side])
+  @@index([serviceId])
+  @@index([organizationId])
+  @@index([demarcPointId])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 5 — PHYSICAL IMPLEMENTATION
+// ══════════════════════════════════════════════════════════════════════════════
+
+// CablePath: physical implementation of a CrossConnectService.
+// A service has one primary path and optionally one diverse (A/B) path.
+//
+// UNIQUENESS RULE enforced in TopologyService (NOT a DB constraint):
+//   At most one non-decommissioned path per (serviceId, pathRole).
+//   During reroute, a new planned-primary briefly coexists with an active old-primary.
+//   The old path moves to decommissioned when the new path reaches active.
+model CablePath {
+  id        String              @id @default(cuid())
+  serviceId String
+  service   CrossConnectService @relation(fields: [serviceId], references: [id])
+  pathRole  PathRole            @default(primary)
+  state     PathState           @default(planned)
+
+  plannedById   String?
+  installedAt   DateTime?
+  installedById String?
+  notes         String?
+
+  segments   PathSegment[]
+  workOrders WorkOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId])
+  @@index([serviceId, pathRole])
+  @@index([state])
+}
+
+// PathSegment: one ordered hop in a CablePath. fromPort → toPort.
+// physicalCableLabel: the label on the actual cable in the field.
+// pathwayId: which conduit/tray this cable runs through (Phase 2).
+model PathSegment {
+  id       String    @id @default(cuid())
+  pathId   String
+  path     CablePath @relation(fields: [pathId], references: [id])
+  sequence Int // 1-based position within the path
+
+  fromPortId String
+  fromPort   Port   @relation("SegmentFromPort", fields: [fromPortId], references: [id])
+  toPortId   String
+  toPort     Port   @relation("SegmentToPort", fields: [toPortId], references: [id])
+
+  segmentType         SegmentType
+  physicalCableLabel  String?
+  physicalCableLength Decimal? // meters
+
+  pathwayId String?
+  pathway   Pathway? @relation(fields: [pathwayId], references: [id])
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pathId, sequence])
+  @@index([pathId])
+  @@index([fromPortId])
+  @@index([toPortId])
+  @@index([pathwayId])
+}
+
+// PortReservation: explicit audit record for every port reservation/release.
+// Created when a CablePath is planned; releasedAt set when path is decommissioned.
+// port.state is the live status; PortReservation provides the full history.
+model PortReservation {
+  id          String  @id @default(cuid())
+  portId      String
+  port        Port    @relation(fields: [portId], references: [id])
+  serviceId   String?
+  cablePathId String?
+
+  state        ReservationState @default(active)
+  reservedById String
+  reservedBy   User             @relation(fields: [reservedById], references: [id])
+
+  reservedAt    DateTime  @default(now())
+  releasedAt    DateTime?
+  releaseReason String?
+
+  @@index([portId])
+  @@index([portId, state])
+  @@index([serviceId])
+  @@index([cablePathId])
+  @@index([state])
+  @@index([reservedAt])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 6 — OPERATIONS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ApprovalRequest: one per CrossConnectOrder.
+// MVP: single ApprovalStep. Phase 2: multi-step without schema change.
+model ApprovalRequest {
+  id      String            @id @default(cuid())
+  orderId String            @unique
+  order   CrossConnectOrder @relation(fields: [orderId], references: [id])
+
+  state       ApprovalState @default(pending)
+  dueBy       DateTime?
+  escalatedAt DateTime?
+
+  steps ApprovalStep[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([state])
+  @@index([dueBy])
+}
+
+// ApprovalStep: an individual decision in an ApprovalRequest.
+// IMMUTABLE once decidedAt is set.
+model ApprovalStep {
+  id                String          @id @default(cuid())
+  approvalRequestId String
+  approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id])
+
+  stepNumber Int    @default(1)
+  approverId String
+  approver   User   @relation(fields: [approverId], references: [id])
+
+  decision  ApprovalDecision?
+  decidedAt DateTime?
+  notes     String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([approvalRequestId, stepNumber])
+  @@index([approverId])
+  @@index([decision])
+}
+
+// WorkOrder: field work instruction issued to a technician.
+// priority: 1=critical, 2=high, 3=normal, 4=low
+model WorkOrder {
+  id          String              @id @default(cuid())
+  woNumber    String              @unique // WO-2026-00001
+  serviceId   String
+  service     CrossConnectService @relation(fields: [serviceId], references: [id])
+  cablePathId String?
+  cablePath   CablePath?          @relation(fields: [cablePathId], references: [id])
+
+  woType   WorkOrderType
+  state    WorkOrderState @default(created)
+  priority Int            @default(3)
+
+  assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  dueBy       DateTime?
+
+  techNotes String?
+
+  tasks       WorkOrderTask[]
+  documents   Document[]
+  auditEvents AuditEvent[]    @relation("WorkOrderAuditEvents")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([serviceId])
+  @@index([assignedToId])
+  @@index([state])
+  @@index([scheduledAt])
+  @@index([priority, state])
+}
+
+// WorkOrderTask: discrete sub-task within a WorkOrder.
+// IMMUTABLE once completedAt is set.
+// completedById is a soft reference to avoid circular FK.
+model WorkOrderTask {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  sequence      Int
+  name          String
+  description   String?
+  state         WorkOrderTaskState @default(pending)
+  completedAt   DateTime?
+  completedById String?
+  notes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workOrderId, sequence])
+  @@index([workOrderId])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LAYER 7 — CROSS-CUTTING
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Document: S3-backed file attached to an order or work order.
+// uploadedById is a soft reference to avoid circular FK issues.
+// supersededById: Document.id of newer version of same file.
+model Document {
+  id           String       @id @default(cuid())
+  uploadedById String
+  filename     String
+  s3Key        String       @unique
+  mimeType     String
+  sizeBytes    Int
+  docType      DocumentType
+
+  orderId     String?
+  order       CrossConnectOrder? @relation(fields: [orderId], references: [id])
+  workOrderId String?
+  workOrder   WorkOrder?         @relation(fields: [workOrderId], references: [id])
+
+  isActive       Boolean @default(true)
+  supersededById String?
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([workOrderId])
+  @@index([uploadedById])
+  @@index([docType])
+  @@index([isActive])
+}
+
+// BillingTriggerEvent: append-only billing signal.
+// Billing system polls WHERE exportedAt IS NULL, then sets exportedAt after consumption.
+// mrcCents/nrcCents are immutable snapshots at event time.
+model BillingTriggerEvent {
+  id        String              @id @default(cuid())
+  serviceId String
+  service   CrossConnectService @relation(fields: [serviceId], references: [id])
+
+  eventType  BillingEventType
+  occurredAt DateTime
+
+  mrcCents Int?
+  nrcCents Int?
+  metadata Json?
+
+  exportedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([serviceId])
+  @@index([exportedAt])
+  @@index([occurredAt])
+  @@index([eventType])
+}
+
+// AuditEvent: append-only. Never updated or deleted. No cascade deletes.
+// actorId null = system/background job.
+// entityType + entityId: polymorphic soft reference to any entity.
+model AuditEvent {
+  id      String  @id @default(cuid())
+  actorId String?
+  actor   User?   @relation(fields: [actorId], references: [id])
+
+  entityType String
+  entityId   String
+  action     String
+
+  diff      Json?
+  ipAddress String?
+  userAgent String?
+
+  occurredAt DateTime @default(now())
+
+  orderId     String?
+  order       CrossConnectOrder?   @relation("OrderAuditEvents", fields: [orderId], references: [id])
+  serviceId   String?
+  service     CrossConnectService? @relation("ServiceAuditEvents", fields: [serviceId], references: [id])
+  workOrderId String?
+  workOrder   WorkOrder?           @relation("WorkOrderAuditEvents", fields: [workOrderId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([occurredAt])
+  @@index([orderId])
+  @@index([serviceId])
+  @@index([workOrderId])
+}

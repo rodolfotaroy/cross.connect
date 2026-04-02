@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "Prisma.prisma",
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-azuretools.vscode-docker",
+    "humao.rest-client",
+    "vitest.explorer",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    "christian-kohler.path-intellisense",
+    "mikestead.dotenv"
+  ]
+}

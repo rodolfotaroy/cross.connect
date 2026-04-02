@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "authjs.csrf-token",
+      "value": "6704eefff845dc62148e8e7258f5e7cb8a95a65ee24a6622b272071c149d567b%7C6bffc4ae414c3718c6ba7dcafeaa8d15c89c8d8953903499084ec2ffa2c8f359",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.callback-url",
+      "value": "http%3A%2F%2F192.168.1.3%3A3210",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoieWFWYTg1aWRIZThUblJmWDJpZ3VtZWRNdTFWUkRVNG1tRmNpTE1YRGNpUW0yNHJtMEVTeUNrSUFnbF9rYnBBdDU0ZkE4SDI2UDl1dFgtOHVMU0pKeHcifQ..Jx0Dd7ecVqIoXm_xXO5tCw.60Pg415ojeWQ3rWJhqRaMk7ADssL6CTBFsUx5RD8EgHnEHtv0SJuTwZCqoLe7ubYv6yIMIu84wT4jwXBtk5B9gF2k1RXu7ycnRxCstNe8pRc5eX7ShAmxw5W1Wt9pItJhuHV78sZYH2-kSqReVNIa2V5JFOhbOjlTCS6pIGhePBHl8O-gXHW3RVfe4yOke838FdRsTaNFeSiLn8tjS803FiH3pBQCZmJH8tu8dUm46lI4Dwj_eblC179BbcdG46ml9K7mQnMoA13PsAWYmg63YA2-TxLhUMsnJe653fn1j3_jzeZ0VJkFtYBN4nfoLFr8voIVoUD5XD2QYqsGWry-K6riHbd4W6v6AVcfF-2qYCGMvROPjQYuKF6l-m4gLUXHja7zBFjtYanke9z0dcEYB_wHjNI-0NoOi-8Bx33I6XEHJp1j8S1ChHimwKWxh7I3VuAkKkTu9bASfhWhth5rizCmE_wZsui5gPXPht9LvlPM-wWjXhFzUEOj4duIiyfaHjJwo4F-HcfuoRjQcFXmGuh472507mbPa5ezPBxiIW53O8xqlZ0x3F5CWCgggIs_kpf8kPK14KqpFEKtENdpGCwBn6wt-HujqFfu_8ObrXZoDRurX318zdshZxjzD7J2vny__5Io6mMzL01SCDqmQ39d2MsrFBQswBl5pqWCX2mRf6q2OcoGcQxfj2pjJzz97vYAKtuqN_xUavf4wElf8ITy6pt-755DTWfCc1sq0RmH6aV7_ntplAxtgNra8bWk1i5_OCXhKrPxK9eDqieCI_qPvJYtJCFsSpPKlVQgJIIHOIxCwvVuVsdOgopv2iBSR9xdvEncZ-RJTNXJ8U6WVJcfHVW3KztdPy4z2Gdhr82vloWHtTAMwNWXBDJ6oavC5qjroL52xEejtBx43W0EfMPgKVd--VzPxPSnr-sfjgrUpga7QCoJsUhP6J7tQVyLdkDsc-GZi3Vk0HMrq7EV4kod7CXTVYg9JZgtOUzd_KY3l8eCmmnhC8lqUhpyBdVtazYkYMQZLbxhHxgPT3Vd41-eoCmTXEIqWdirVHIiOUZXx5iN1jfesXBDFeuyZpc_ikODNUCar3LWFgZoTXCWFxDNECjWLRhV9wadPMeBgsomdVGsUK0Sw4K8kMj8b_P5rkEEPG1neD63vNGnELn3z-BXwnUmP342W4Je2JFJ5VkLHBlnrw1UbyHpW-dAsus.dTUkxRI_giLG_JQNik5zAhmWGpCj76woDrzsOqjKKnU",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1777298131.542802,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
