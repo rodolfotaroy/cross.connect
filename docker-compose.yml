@@ -73,12 +73,10 @@ services:
       S3_BUCKET: cross-connect-docs
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin
-      CORS_ORIGINS: http://localhost:3210,http://192.168.1.3:3210
+      CORS_ORIGINS: https://172.16.100.69
       JOBS_SCHEMA: xc_jobs
       THROTTLE_TTL_SECONDS: 60
       THROTTLE_LIMIT: 500
-    ports:
-      - '3100:3001'
     healthcheck:
       test:
         [
@@ -97,7 +95,7 @@ services:
       args:
         # Baked into the JS bundle at build time — must match the host port
         # that the user's browser uses to reach the API.
-        NEXT_PUBLIC_API_URL: http://192.168.1.3:3100
+        NEXT_PUBLIC_API_URL: https://172.16.100.69
     restart: unless-stopped
     depends_on:
       api:
@@ -109,13 +107,41 @@ services:
       API_INTERNAL_URL: http://api:3001
       # next-auth v5 uses AUTH_SECRET and AUTH_URL (NEXTAUTH_* kept for compat)
       AUTH_SECRET: ${NEXTAUTH_SECRET}
-      AUTH_URL: http://192.168.1.3:3210
+      AUTH_URL: https://172.16.100.69
       AUTH_TRUST_HOST: 'true'
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: http://192.168.1.3:3210
+      NEXTAUTH_URL: https://172.16.100.69
+    # port 3000 is only accessible via the nginx reverse proxy on port 443
+
+  certgen:
+    image: alpine
+    command: >
+      sh -c "
+        [ -f /certs/server.crt ] && exit 0;
+        apk add --no-cache openssl &&
+        openssl req -x509 -nodes -newkey rsa:2048 -days 3650
+          -keyout /certs/server.key
+          -out /certs/server.crt
+          -subj /CN=172.16.100.69
+          -addext subjectAltName=IP:172.16.100.69
+      "
+    volumes:
+      - ssl_certs:/certs
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
     ports:
-      - '3210:3000'
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ssl_certs:/etc/nginx/certs:ro
+    depends_on:
+      certgen:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:
   minio_data:
+  ssl_certs:
