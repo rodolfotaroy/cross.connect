@@ -115,16 +115,16 @@ services:
 
   certgen:
     image: alpine
-    command: >
-      sh -c "
-        [ -f /certs/server.crt ] && exit 0;
-        apk add --no-cache openssl &&
-        openssl req -x509 -nodes -newkey rsa:2048 -days 3650
-          -keyout /certs/server.key
-          -out /certs/server.crt
-          -subj /CN=172.16.100.69
-          -addext subjectAltName=IP:172.16.100.69
-      "
+    command:
+      - /bin/sh
+      - -c
+      - |
+        [ -f /certs/server.crt ] && exit 0
+        apk add --no-cache openssl
+        openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+          -keyout /certs/server.key \
+          -out /certs/server.crt \
+          -subj '/CN=172.16.100.69'
     volumes:
       - ssl_certs:/certs
 
