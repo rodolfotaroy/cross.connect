@@ -16,12 +16,10 @@ export default async function CustomerLayout({ children }: { children: React.Rea
   if (!allowedRoles.includes(user?.role)) redirect('/dashboard');
 
   const canPlaceOrders = ['customer_admin', 'customer_orderer'].includes(user?.role);
-  const isAdmin = user?.role === 'customer_admin';
   const navItems = [
     { href: '/portal/orders', label: 'My Orders' },
     ...(canPlaceOrders ? [{ href: '/portal/orders/new', label: 'Request Cross-Connect' }] : []),
     { href: '/portal/services', label: 'Active Services' },
-    ...(isAdmin ? [{ href: '/portal/team', label: 'My Team' }] : []),
   ];
 
   return (

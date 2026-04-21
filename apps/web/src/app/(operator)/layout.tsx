@@ -14,7 +14,6 @@ export default async function OperatorLayout({ children }: { children: React.Rea
   const allowedRoles = ['super_admin', 'ops_manager', 'ops_technician'];
   if (!allowedRoles.includes(user?.role)) redirect('/portal');
 
-  const canManageOrgs = ['super_admin', 'ops_manager'].includes(user?.role);
   const NAV_ITEMS = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/orders', label: 'Orders' },
@@ -26,9 +25,6 @@ export default async function OperatorLayout({ children }: { children: React.Rea
     { href: '/organizations', label: 'Organizations' },
     { href: '/billing', label: 'Billing Events' },
     { href: '/audit', label: 'Audit Log' },
-    ...(canManageOrgs && user?.orgId
-      ? [{ href: `/organizations/${user.orgId}`, label: 'My Team' }]
-      : []),
   ];
 
   return (

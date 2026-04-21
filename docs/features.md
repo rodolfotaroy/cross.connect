@@ -96,7 +96,7 @@
 
 ### Team Management (ops_manager / super_admin)
 
-- List operator team members
+- List operator team members via Organizations
 - Add operator user
 - Edit user role
 - Deactivate / Reactivate user
@@ -126,14 +126,6 @@
 
 - Upload documents to orders
 - Download documents via presigned URL
-
-### Team Management (customer_admin only)
-
-- List team members
-- Invite new user (customer_admin, customer_orderer, customer_viewer)
-- View user detail
-- Change user role
-- Deactivate / Reactivate user
 
 ---
 
@@ -165,13 +157,6 @@
 - Create new support ticket
 - View ticket detail
 - Add comments / update status
-
-### Organization (sp_admin only)
-
-- View SP organization info and team members
-- Add team member (sp_admin, sp_ops, sp_viewer, sp_report)
-- View team member detail
-- Deactivate / Reactivate team member
 
 ---
 

@@ -23,9 +23,6 @@ const OPERATOR_ONLY_PREFIXES = [
 // customer_viewer is blocked from all of these
 const CUSTOMER_ORDERER_REQUIRED_PREFIXES = ['/portal/orders/new'];
 
-// Routes that require customer_admin specifically
-const CUSTOMER_ADMIN_REQUIRED_PREFIXES = ['/portal/team'];
-
 // SP portal routes that require sp_admin specifically
 const SP_ADMIN_ONLY_PREFIXES = ['/sp/organization'];
 
@@ -107,17 +104,8 @@ export async function middleware(request: NextRequest) {
 
   // ── customer_viewer: read-only — block mutation-oriented pages ────────────
   if (role === 'customer_viewer') {
-    const blocked =
-      CUSTOMER_ORDERER_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p)) ||
-      CUSTOMER_ADMIN_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p));
+    const blocked = CUSTOMER_ORDERER_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p));
     if (blocked) {
-      return NextResponse.redirect(new URL('/portal', request.url));
-    }
-  }
-
-  // ── customer_orderer: can place orders but cannot manage team ─────────────
-  if (role === 'customer_orderer') {
-    if (CUSTOMER_ADMIN_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p))) {
       return NextResponse.redirect(new URL('/portal', request.url));
     }
   }
