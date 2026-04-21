@@ -34,6 +34,7 @@ const SERVICE_STATE_STYLES: Record<ServiceState, string> = {
   suspended: 'bg-yellow-100 text-yellow-800',
   pending_disconnect: 'bg-orange-100 text-orange-700',
   disconnected: 'bg-gray-100 text-gray-400',
+  expired: 'bg-red-100 text-red-400',
 };
 
 export function ServiceStateBadge({ state }: { state: ServiceState }) {
@@ -69,6 +70,7 @@ const WORK_ORDER_STATE_STYLES: Record<WorkOrderState, string> = {
   created: 'bg-gray-100 text-gray-600',
   assigned: 'bg-blue-100 text-blue-700',
   in_progress: 'bg-yellow-100 text-yellow-800',
+  on_hold: 'bg-purple-100 text-purple-700',
   pending_test: 'bg-orange-100 text-orange-700',
   completed: 'bg-green-100 text-green-700',
   cancelled: 'bg-gray-100 text-gray-400',
