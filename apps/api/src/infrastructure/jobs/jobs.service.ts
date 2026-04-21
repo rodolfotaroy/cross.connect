@@ -52,6 +52,9 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
     data: T,
     options?: PgBoss.SendOptions,
   ): Promise<void> {
+    // pg-boss v10: schedule() has a FK on the queue table, so ensure the
+    // queue row exists before registering the cron entry.
+    await this.boss.createQueue(queue);
     await this.boss.schedule(queue, cron, data, options);
   }
 }

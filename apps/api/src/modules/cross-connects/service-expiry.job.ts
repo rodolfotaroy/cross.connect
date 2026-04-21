@@ -36,8 +36,8 @@ export class ServiceExpiryJob implements OnModuleInit {
     // Register a cron-scheduled job that runs every 5 minutes.
     // pg-boss deduplicates schedule registrations, so re-running onModuleInit
     // after a restart is safe.
-    await this.jobs.schedule(SERVICE_EXPIRY_JOB, '*/5 * * * *', {});
     await this.jobs.work<object>(SERVICE_EXPIRY_JOB, () => this.run());
+    await this.jobs.schedule(SERVICE_EXPIRY_JOB, '*/5 * * * *', {});
     this.logger.log('Service expiry job registered (cron: */5 * * * *)');
   }
 
