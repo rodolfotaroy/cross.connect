@@ -140,6 +140,8 @@ services:
     depends_on:
       certgen:
         condition: service_completed_successfully
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:
