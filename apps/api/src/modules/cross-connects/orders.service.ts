@@ -1,28 +1,28 @@
 ﻿import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    UnprocessableEntityException,
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type { OrderState } from '@xc/types';
 import { randomInt } from 'node:crypto';
 import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import {
-    InsufficientRoleError,
-    InvalidTransitionError,
-    TransitionGuardError,
+  InsufficientRoleError,
+  InvalidTransitionError,
+  TransitionGuardError,
 } from '../../common/errors/domain.errors';
 import { buildPaginatedMeta } from '../../common/pagination/paginate';
 import { StateMachine } from '../../common/state-machine/state-machine';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type {
-    ApproveOrderDto,
-    CancelOrderDto,
-    ConfirmFeasibilityDto,
-    CreateOrderDto,
-    ListOrdersDto,
-    RejectOrderDto,
+  ApproveOrderDto,
+  CancelOrderDto,
+  ConfirmFeasibilityDto,
+  CreateOrderDto,
+  ListOrdersDto,
+  RejectOrderDto,
 } from './dto/order.dto';
 import { type OrderGuardEntity, ORDER_TRANSITIONS } from './order.lifecycle';
 
@@ -486,6 +486,85 @@ export class OrdersService {
         },
       });
 
+      return updated;
+    });
+  }
+
+  async holdOrder(id: string, holdReason: string, user: AuthenticatedUser) {
+    const order = await this.prisma.crossConnectOrder.findUniqueOrThrow({ where: { id } });
+
+    try {
+      orderMachine.transition(order.state as OrderState, 'on_hold', {
+        actorId: user.id,
+        actorRole: user.role,
+        entity: {
+          id: order.id,
+          state: order.state as OrderState,
+          submittedById: order.submittedById,
+          requestingOrgId: order.requestingOrgId,
+          endpoints: [],
+        },
+        payload: { holdReason },
+      });
+    } catch (err) {
+      toHttpException(err);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.crossConnectOrder.update({
+        where: { id },
+        data: { state: 'on_hold' },
+      });
+      await tx.auditEvent.create({
+        data: {
+          actorId: user.id,
+          entityType: 'CrossConnectOrder',
+          entityId: id,
+          action: 'order.on_hold',
+          diff: { before: { state: order.state }, after: { state: 'on_hold' }, holdReason },
+          orderId: id,
+          occurredAt: new Date(),
+        },
+      });
+      return updated;
+    });
+  }
+
+  async releaseHold(id: string, user: AuthenticatedUser) {
+    const order = await this.prisma.crossConnectOrder.findUniqueOrThrow({ where: { id } });
+
+    try {
+      orderMachine.transition(order.state as OrderState, 'under_review', {
+        actorId: user.id,
+        actorRole: user.role,
+        entity: {
+          id: order.id,
+          state: order.state as OrderState,
+          submittedById: order.submittedById,
+          requestingOrgId: order.requestingOrgId,
+          endpoints: [],
+        },
+      });
+    } catch (err) {
+      toHttpException(err);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.crossConnectOrder.update({
+        where: { id },
+        data: { state: 'under_review' },
+      });
+      await tx.auditEvent.create({
+        data: {
+          actorId: user.id,
+          entityType: 'CrossConnectOrder',
+          entityId: id,
+          action: 'order.hold_released',
+          diff: { before: { state: 'on_hold' }, after: { state: 'under_review' } },
+          orderId: id,
+          occurredAt: new Date(),
+        },
+      });
       return updated;
     });
   }

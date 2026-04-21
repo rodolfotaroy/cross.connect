@@ -1,5 +1,6 @@
 ﻿import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { z } from 'zod';
 import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -15,6 +16,9 @@ import {
   RejectOrderDto,
 } from './dto/order.dto';
 import { OrdersService } from './orders.service';
+
+const HoldOrderDto = z.object({ holdReason: z.string().min(1) });
+type HoldOrderDto = z.infer<typeof HoldOrderDto>;
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -103,7 +107,8 @@ export class OrdersController {
   @Patch(':id/cancel')
   @Roles('customer_admin', 'customer_orderer', 'super_admin', 'ops_manager')
   @ApiOperation({
-    summary: 'Cancel an order (draft | submitted | under_review | pending_approval -> cancelled)',
+    summary:
+      'Cancel an order (draft | submitted | under_review | pending_approval | on_hold -> cancelled)',
   })
   cancel(
     @Param('id') id: string,
@@ -111,5 +116,25 @@ export class OrdersController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.svc.cancelOrder(id, dto, user);
+  }
+
+  @Patch(':id/hold')
+  @Roles('super_admin', 'ops_manager', 'ops_technician')
+  @ApiOperation({
+    summary: 'Place order on hold (under_review | pending_approval -> on_hold)',
+  })
+  hold(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(HoldOrderDto)) dto: HoldOrderDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.svc.holdOrder(id, dto.holdReason, user);
+  }
+
+  @Patch(':id/release-hold')
+  @Roles('super_admin', 'ops_manager', 'ops_technician')
+  @ApiOperation({ summary: 'Release hold — return order to under_review' })
+  releaseHold(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.svc.releaseHold(id, user);
   }
 }

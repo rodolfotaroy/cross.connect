@@ -17,6 +17,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BillingEventsModule } from './modules/billing-events/billing-events.module';
 import { CrossConnectsModule } from './modules/cross-connects/cross-connects.module';
+import { DedicatedModule } from './modules/dedicated/dedicated.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { LocationsModule } from './modules/locations/locations.module';
@@ -55,6 +56,7 @@ import { WorkOrdersModule } from './modules/work-orders/work-orders.module';
     DocumentsModule,
     BillingEventsModule,
     AuditModule,
+    DedicatedModule,
   ],
   providers: [
     // Apply per-user throttler globally (respects @SkipThrottle / @Throttle overrides)

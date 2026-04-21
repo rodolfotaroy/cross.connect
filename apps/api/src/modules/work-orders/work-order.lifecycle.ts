@@ -39,9 +39,9 @@
 
 import { UserRole, WorkOrderState, WorkOrderType } from '@xc/types';
 import {
-    InsufficientRoleError,
-    MissingTransitionDataError,
-    TransitionGuardError,
+  InsufficientRoleError,
+  MissingTransitionDataError,
+  TransitionGuardError,
 } from '../../common/errors/domain.errors';
 import { TransitionContext, TransitionDef } from '../../common/state-machine/state-machine';
 
@@ -122,8 +122,7 @@ export const WORK_ORDER_TRANSITIONS: TransitionDef<WorkOrderState, WorkOrderGuar
       requireRole(ctx, UserRole.ops_technician, UserRole.ops_manager, UserRole.super_admin);
       requireField(ctx, 'techNotes');
       const isAssigned =
-        ctx.actorRole !== UserRole.ops_technician ||
-        ctx.actorId === ctx.entity.assignedToId;
+        ctx.actorRole !== UserRole.ops_technician || ctx.actorId === ctx.entity.assignedToId;
       if (!isAssigned) {
         throw new TransitionGuardError(
           'Only the assigned technician or a manager can advance to pending_test',
@@ -197,9 +196,54 @@ export const WORK_ORDER_TRANSITIONS: TransitionDef<WorkOrderState, WorkOrderGuar
       if (ctx.entity.woType === WorkOrderType.disconnect) {
         throw new TransitionGuardError(
           'Disconnect work orders cannot be cancelled once assigned. ' +
-          'Use the service resume flow if the disconnect is no longer required.',
+            'Use the service resume flow if the disconnect is no longer required.',
         );
       }
+    },
+  },
+
+  //
+  // 8. [assigned | in_progress] → on_hold
+  //    Actor:  ops_manager, super_admin, or the assigned technician
+  //    Guards: holdReason required — must document why work is paused
+  //    Use case: waiting for parts, access denied, management decision needed
+  //
+  {
+    from: ['assigned', 'in_progress'],
+    to: 'on_hold',
+    description: 'Work order placed on hold',
+    guard(ctx) {
+      requireRole(ctx, UserRole.ops_technician, UserRole.ops_manager, UserRole.super_admin);
+      requireField(ctx, 'holdReason');
+    },
+  },
+
+  //
+  // 9. on_hold → in_progress  (resume from hold)
+  //    Actor:  ops_manager, super_admin, or the assigned technician
+  //    Guards: none beyond role
+  //
+  {
+    from: 'on_hold',
+    to: 'in_progress',
+    description: 'Work order resumed from hold',
+    guard(ctx) {
+      requireRole(ctx, UserRole.ops_technician, UserRole.ops_manager, UserRole.super_admin);
+    },
+  },
+
+  //
+  // 10. on_hold → cancelled
+  //    Actor:  ops_manager, super_admin
+  //    Guards: cancellation reason required
+  //
+  {
+    from: 'on_hold',
+    to: 'cancelled',
+    description: 'Work order cancelled while on hold',
+    guard(ctx) {
+      requireRole(ctx, UserRole.ops_manager, UserRole.super_admin);
+      requireField(ctx, 'cancellationReason');
     },
   },
 ];

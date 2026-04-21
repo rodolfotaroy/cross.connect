@@ -467,3 +467,149 @@ export const ListWorkOrdersSchema = PaginationSchema.extend({
   q: z.string().max(200).optional(), // search woNumber
 });
 export type ListWorkOrdersInput = z.infer<typeof ListWorkOrdersSchema>;
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DEDICATED PORTAL
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Dedicated Cross Connects ──────────────────────────────────────────────────
+
+const DedicatedXcHopInputSchema = z.object({
+  hopNumber: z.number().int().min(1),
+  room: z.string().max(200).nullable().optional(),
+  rack: z.string().max(200).nullable().optional(),
+  device: z.string().max(200).nullable().optional(),
+  port: z.string().max(200).nullable().optional(),
+});
+
+export const CreateDedicatedXcSchema = z.object({
+  circuitId: z.string().max(100).nullable().optional(),
+  ticketNumber: z.string().max(100).nullable().optional(),
+  salesSource: z.string().max(200).nullable().optional(),
+  nrc: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .nullable()
+    .optional(),
+  mrc: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .nullable()
+    .optional(),
+  serviceId: z.string().max(100).nullable().optional(),
+  status: z
+    .enum(['draft', 'submitted', 'in_progress', 'completed', 'disconnected', 'cancelled'])
+    .default('draft'),
+  testReport: z.string().max(500).nullable().optional(),
+  siteId: z.string().nullable().optional(),
+  dateCompleted: z.string().datetime().nullable().optional(),
+  year: z.number().int().min(2000).max(2100).nullable().optional(),
+  quarter: z.number().int().min(1).max(4).nullable().optional(),
+  billableDate: z.string().datetime().nullable().optional(),
+  disconnectionDate: z.string().datetime().nullable().optional(),
+  requestedDisconnectionDate: z.string().datetime().nullable().optional(),
+  orderingCompany: z.string().max(200).nullable().optional(),
+  // A-End
+  aEndCampus: z.string().max(200).nullable().optional(),
+  aEndBuilding: z.string().max(200).nullable().optional(),
+  aEndFloor: z.string().max(100).nullable().optional(),
+  aEndRoom: z.string().max(200).nullable().optional(),
+  aEndRack: z.string().max(200).nullable().optional(),
+  aEndDevice: z.string().max(200).nullable().optional(),
+  aEndPort: z.string().max(200).nullable().optional(),
+  // Z-End
+  zEndCampus: z.string().max(200).nullable().optional(),
+  zEndBuilding: z.string().max(200).nullable().optional(),
+  zEndFloor: z.string().max(100).nullable().optional(),
+  zEndRoom: z.string().max(200).nullable().optional(),
+  zEndRack: z.string().max(200).nullable().optional(),
+  zEndDevice: z.string().max(200).nullable().optional(),
+  zEndPort: z.string().max(200).nullable().optional(),
+  // Other
+  customerType: z.string().max(100).nullable().optional(),
+  cableType: z.string().max(100).nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
+  hops: z.array(DedicatedXcHopInputSchema).optional(),
+});
+export type CreateDedicatedXcInput = z.infer<typeof CreateDedicatedXcSchema>;
+
+export const UpdateDedicatedXcSchema = CreateDedicatedXcSchema.partial();
+export type UpdateDedicatedXcInput = z.infer<typeof UpdateDedicatedXcSchema>;
+
+export const ListDedicatedXcSchema = PaginationSchema.extend({
+  status: z
+    .enum(['draft', 'submitted', 'in_progress', 'completed', 'disconnected', 'cancelled'])
+    .optional(),
+  q: z.string().max(200).optional(), // search crossConnectId, circuitId, ticketNumber
+  year: z.coerce.number().int().optional(),
+  quarter: z.coerce.number().int().min(1).max(4).optional(),
+});
+export type ListDedicatedXcInput = z.infer<typeof ListDedicatedXcSchema>;
+
+export const AddDedicatedXcHopSchema = z.object({
+  room: z.string().max(200).nullable().optional(),
+  rack: z.string().max(200).nullable().optional(),
+  device: z.string().max(200).nullable().optional(),
+  port: z.string().max(200).nullable().optional(),
+});
+export type AddDedicatedXcHopInput = z.infer<typeof AddDedicatedXcHopSchema>;
+
+// ── Dedicated Portal Reports ──────────────────────────────────────────────────
+
+export const ListReportsSchema = PaginationSchema.extend({
+  year: z.coerce.number().int().optional(),
+  quarter: z.coerce.number().int().min(1).max(4).optional(),
+  status: z
+    .enum(['draft', 'submitted', 'in_progress', 'completed', 'disconnected', 'cancelled'])
+    .optional(),
+  dateFrom: z.string().datetime().optional(), // applied to billableDate
+  dateTo: z.string().datetime().optional(),
+  orderingCompany: z.string().max(200).optional(),
+  customerType: z.string().max(100).optional(),
+});
+export type ListReportsInput = z.infer<typeof ListReportsSchema>;
+
+// ── Dedicated Portal Support Tickets ─────────────────────────────────────────
+
+export const CreateSupportTicketSchema = z.object({
+  subject: z.string().min(5).max(300),
+  description: z.string().min(10).max(10000),
+  category: z.enum(['issue', 'suggestion', 'billing', 'access', 'other']).default('issue'),
+  priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+});
+export type CreateSupportTicketInput = z.infer<typeof CreateSupportTicketSchema>;
+
+export const UpdateTicketStatusSchema = z.object({
+  status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
+  resolutionNote: z.string().max(5000).optional(),
+});
+export type UpdateTicketStatusInput = z.infer<typeof UpdateTicketStatusSchema>;
+
+export const ListSupportTicketsSchema = PaginationSchema.extend({
+  status: z.enum(['open', 'in_progress', 'resolved', 'closed']).optional(),
+  category: z.enum(['issue', 'suggestion', 'billing', 'access', 'other']).optional(),
+});
+export type ListSupportTicketsInput = z.infer<typeof ListSupportTicketsSchema>;
+
+export const CreateTicketCommentSchema = z.object({
+  body: z.string().min(1).max(10000),
+});
+export type CreateTicketCommentInput = z.infer<typeof CreateTicketCommentSchema>;
+
+// ── Dedicated Portal Team Management ─────────────────────────────────────────
+
+export const CreateSpUserSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(12).max(128),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  role: z.enum(['sp_admin', 'sp_ops', 'sp_viewer', 'sp_report']),
+});
+export type CreateSpUserInput = z.infer<typeof CreateSpUserSchema>;
+
+export const UpdateSpUserSchema = z.object({
+  role: z.enum(['sp_admin', 'sp_ops', 'sp_viewer', 'sp_report']).optional(),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+});
+export type UpdateSpUserInput = z.infer<typeof UpdateSpUserSchema>;

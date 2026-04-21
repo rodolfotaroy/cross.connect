@@ -188,6 +188,28 @@ export const SERVICE_TRANSITIONS: TransitionDef<ServiceState, ServiceGuardEntity
       }
     },
   },
+
+  //
+  // 7. active → expired  (system-triggered when expiresAt is reached)
+  //    Actor:  system job (actorId = undefined)
+  //    Guards: service must be temporary and expiresAt must have passed
+  //    Billing: emit BillingTriggerEvent(service_expired)
+  //    Note:   only temporary services can expire. Permanent services use the
+  //            pending_disconnect → disconnected flow.
+  //
+  {
+    from: 'active',
+    to: 'expired',
+    description: 'Temporary service expired — expiresAt passed without renewal',
+    guard(ctx) {
+      if (!ctx.entity.isTemporary) {
+        throw new TransitionGuardError('Only temporary services can expire');
+      }
+      if (!ctx.entity.expiresAt || ctx.entity.expiresAt > new Date()) {
+        throw new TransitionGuardError('Service expiresAt has not been reached yet');
+      }
+    },
+  },
 ];
 
 // ── Invalid transitions (documentation) ──────────────────────────────────────

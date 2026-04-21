@@ -5,12 +5,12 @@ import { buildPaginatedMeta } from '../../common/pagination/paginate';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import type {
-    AssignWorkOrderDto,
-    CancelWorkOrderDto,
-    CompleteWorkOrderDto,
-    CreateWorkOrderDto,
-    ListWorkOrdersDto,
-    ProgressWorkOrderDto,
+  AssignWorkOrderDto,
+  CancelWorkOrderDto,
+  CompleteWorkOrderDto,
+  CreateWorkOrderDto,
+  ListWorkOrdersDto,
+  ProgressWorkOrderDto,
 } from './dto/work-order.dto';
 
 function generateWoNumber(): string {
@@ -315,6 +315,55 @@ export class WorkOrdersService {
       entityId: id,
       action: 'workorder.cancelled',
       diff: { reason: dto.cancellationReason },
+      workOrderId: id,
+      serviceId: wo.serviceId,
+    });
+
+    return updated;
+  }
+
+  async hold(id: string, holdReason: string, actorId: string) {
+    const wo = await this.prisma.workOrder.findUniqueOrThrow({ where: { id } });
+
+    if (!['assigned', 'in_progress'].includes(wo.state)) {
+      throw new BadRequestException(`Work order in state '${wo.state}' cannot be placed on hold`);
+    }
+
+    const updated = await this.prisma.workOrder.update({
+      where: { id },
+      data: { state: 'on_hold' },
+    });
+
+    await this.audit.log({
+      actorId,
+      entityType: 'WorkOrder',
+      entityId: id,
+      action: 'workorder.on_hold',
+      diff: { holdReason },
+      workOrderId: id,
+      serviceId: wo.serviceId,
+    });
+
+    return updated;
+  }
+
+  async releaseHold(id: string, actorId: string) {
+    const wo = await this.prisma.workOrder.findUniqueOrThrow({ where: { id } });
+
+    if (wo.state !== 'on_hold') {
+      throw new BadRequestException(`Work order must be on_hold to release (current: ${wo.state})`);
+    }
+
+    const updated = await this.prisma.workOrder.update({
+      where: { id },
+      data: { state: 'in_progress' },
+    });
+
+    await this.audit.log({
+      actorId,
+      entityType: 'WorkOrder',
+      entityId: id,
+      action: 'workorder.hold_released',
       workOrderId: id,
       serviceId: wo.serviceId,
     });

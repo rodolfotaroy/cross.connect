@@ -1,18 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
+import type { ListPendingDto } from './dto/billing-events.dto';
 
 @Injectable()
 export class BillingEventsService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Returns events not yet exported to the billing system.
-  // Billing system polls this endpoint and then calls markExported.
-  async listPending() {
-    return this.prisma.billingTriggerEvent.findMany({
-      where: { exportedAt: null },
+  // Keyset pagination: pass the last received event id as `cursor` to get the
+  // next page, ensuring consistent results even if new events are written during
+  // a multi-page poll cycle.
+  async listPending(query: ListPendingDto) {
+    const { limit, cursor } = query;
+
+    const where: { exportedAt: null; id?: { gt: string } } = { exportedAt: null };
+
+    // Apply cursor: return events with id > cursor (lexicographic ordering on cuid2
+    // is stable when combined with occurredAt ordering below)
+    if (cursor) {
+      where.id = { gt: cursor };
+    }
+
+    const data = await this.prisma.billingTriggerEvent.findMany({
+      where,
       include: { service: { select: { id: true, serviceNumber: true } } },
-      orderBy: { occurredAt: 'asc' },
+      orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+      take: limit,
     });
+
+    return {
+      data,
+      nextCursor: data.length === limit ? data[data.length - 1].id : null,
+    };
   }
 
   async listForService(serviceId: string) {

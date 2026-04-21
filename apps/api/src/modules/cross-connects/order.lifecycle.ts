@@ -191,7 +191,7 @@ export const ORDER_TRANSITIONS: TransitionDef<OrderState, OrderGuardEntity>[] = 
   //            cancelling an approved order requires the service disconnect path
   //
   {
-    from: ['draft', 'submitted', 'under_review', 'pending_approval'],
+    from: ['draft', 'submitted', 'under_review', 'pending_approval', 'on_hold'],
     to: 'cancelled',
     description: 'Order cancelled before approval',
     guard(ctx) {
@@ -205,6 +205,37 @@ export const ORDER_TRANSITIONS: TransitionDef<OrderState, OrderGuardEntity>[] = 
 
       // Customers can only cancel orders belonging to their own org; ops can cancel anything.
       // Org-level check is done in the service layer, not here, to keep guards thin.
+    },
+  },
+
+  //
+  // 8. [under_review | pending_approval] → on_hold
+  //    Actor:  ops_technician, ops_manager, super_admin
+  //    Guards: holdReason required — ops must document why the order is paused
+  //    Use case: customer needs to provide additional documentation, LOA update,
+  //              or there is a temporary capacity constraint.
+  //
+  {
+    from: ['under_review', 'pending_approval'],
+    to: 'on_hold',
+    description: 'Order placed on hold pending customer action or ops investigation',
+    guard(ctx) {
+      requireRole(ctx, UserRole.ops_technician, UserRole.ops_manager, UserRole.super_admin);
+      requireField(ctx, 'holdReason');
+    },
+  },
+
+  //
+  // 9. on_hold → under_review  (release hold back to review)
+  //    Actor:  ops_technician, ops_manager, super_admin
+  //    Guards: none beyond role
+  //
+  {
+    from: 'on_hold',
+    to: 'under_review',
+    description: 'Hold released — order returned to ops review',
+    guard(ctx) {
+      requireRole(ctx, UserRole.ops_technician, UserRole.ops_manager, UserRole.super_admin);
     },
   },
 ];

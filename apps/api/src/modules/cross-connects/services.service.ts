@@ -1,21 +1,21 @@
 import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    UnprocessableEntityException,
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import type {
-    DisconnectServiceInput,
-    ExtendTemporaryServiceInput,
-    ListServicesInput,
-    ServiceState,
-    SuspendServiceInput,
+  DisconnectServiceInput,
+  ExtendTemporaryServiceInput,
+  ListServicesInput,
+  ServiceState,
+  SuspendServiceInput,
 } from '@xc/types';
 import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import {
-    InsufficientRoleError,
-    InvalidTransitionError,
-    TransitionGuardError,
+  InsufficientRoleError,
+  InvalidTransitionError,
+  TransitionGuardError,
 } from '../../common/errors/domain.errors';
 import { buildPaginatedMeta } from '../../common/pagination/paginate';
 import { StateMachine } from '../../common/state-machine/state-machine';
@@ -114,7 +114,11 @@ export class ServicesService {
                         rack: {
                           include: {
                             room: { include: { building: { include: { site: true } } } },
-                            cage: { include: { room: { include: { building: { include: { site: true } } } } } },
+                            cage: {
+                              include: {
+                                room: { include: { building: { include: { site: true } } } },
+                              },
+                            },
                           },
                         },
                         room: { include: { building: { include: { site: true } } } },
@@ -129,7 +133,11 @@ export class ServicesService {
                         rack: {
                           include: {
                             room: { include: { building: { include: { site: true } } } },
-                            cage: { include: { room: { include: { building: { include: { site: true } } } } } },
+                            cage: {
+                              include: {
+                                room: { include: { building: { include: { site: true } } } },
+                              },
+                            },
                           },
                         },
                         room: { include: { building: { include: { site: true } } } },
@@ -303,6 +311,9 @@ export class ServicesService {
           occurredAt: new Date(),
         },
       });
+      await tx.billingTriggerEvent.create({
+        data: { serviceId: id, eventType: 'service_suspended', occurredAt: new Date() },
+      });
       return updated;
     });
   }
@@ -334,6 +345,9 @@ export class ServicesService {
           serviceId: id,
           occurredAt: new Date(),
         },
+      });
+      await tx.billingTriggerEvent.create({
+        data: { serviceId: id, eventType: 'service_resumed', occurredAt: new Date() },
       });
       return updated;
     });
@@ -371,6 +385,47 @@ export class ServicesService {
           serviceId: id,
           occurredAt: new Date(),
         },
+      });
+      await tx.billingTriggerEvent.create({
+        data: { serviceId: id, eventType: 'temporary_extended', occurredAt: new Date() },
+      });
+      return updated;
+    });
+  }
+
+  // ── System-triggered expiry for temporary services ───────────────────────
+  // Called by the service-expiry pg-boss job when a service's expiresAt has passed.
+  // actorId is undefined to indicate this is a system action.
+  async expire(id: string) {
+    const entity = await this.buildGuardEntity(id);
+    try {
+      await serviceMachine.transition(entity.state, 'expired', {
+        entity,
+        actorId: undefined,
+        actorRole: undefined,
+      });
+    } catch (err) {
+      toHttpException(err);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.crossConnectService.update({
+        where: { id },
+        data: { state: 'expired', disconnectedAt: new Date() },
+      });
+      await tx.auditEvent.create({
+        data: {
+          actorId: null,
+          entityType: 'CrossConnectService',
+          entityId: id,
+          action: 'service.expired',
+          diff: { before: { state: 'active' }, after: { state: 'expired' } },
+          serviceId: id,
+          occurredAt: new Date(),
+        },
+      });
+      await tx.billingTriggerEvent.create({
+        data: { serviceId: id, eventType: 'service_expired', occurredAt: new Date() },
       });
       return updated;
     });

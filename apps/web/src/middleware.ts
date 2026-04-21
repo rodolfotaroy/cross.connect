@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 // Routes publicly accessible without a session
 const PUBLIC_PATHS = ['/login'];
 
-// Operator-only routes — customer roles are never allowed here
+// Operator-only routes — customer and SP roles are never allowed here
 const OPERATOR_ONLY_PREFIXES = [
   '/dashboard',
   '/orders',
@@ -26,6 +26,15 @@ const CUSTOMER_ORDERER_REQUIRED_PREFIXES = ['/portal/orders/new'];
 // Routes that require customer_admin specifically
 const CUSTOMER_ADMIN_REQUIRED_PREFIXES = ['/portal/team'];
 
+// SP portal routes that require sp_admin specifically
+const SP_ADMIN_ONLY_PREFIXES = ['/sp/organization'];
+
+// SP portal routes that require sp_admin or sp_report
+const SP_REPORT_REQUIRED_PREFIXES = ['/sp/reports'];
+
+// SP mutation routes — blocked for sp_viewer and sp_report
+const SP_WRITE_REQUIRED_PREFIXES = ['/sp/cross-connects/new'];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const session = await auth();
@@ -43,7 +52,9 @@ export async function middleware(request: NextRequest) {
   // ── Logged-in user visiting public page → send to their dashboard ─────────
   if (isPublic && session && !sessionError) {
     const role = (session.user as any)?.role as string | undefined;
-    const destination = role?.startsWith('customer') ? '/portal' : '/dashboard';
+    let destination = '/dashboard';
+    if (role?.startsWith('customer')) destination = '/portal';
+    else if (role?.startsWith('sp')) destination = '/sp';
     return NextResponse.redirect(new URL(destination, request.url));
   }
 
@@ -51,16 +62,47 @@ export async function middleware(request: NextRequest) {
 
   const role = (session.user as any)?.role as string | undefined;
   const isCustomer = role?.startsWith('customer') ?? false;
-  const isOperator = !isCustomer;
+  const isOperator = !isCustomer && !role?.startsWith('sp');
+  const isSp = role?.startsWith('sp') ?? false;
 
-  // ── Block customer roles from all operator routes ─────────────────────────
-  if (isCustomer && OPERATOR_ONLY_PREFIXES.some((p) => pathname.startsWith(p))) {
-    return NextResponse.redirect(new URL('/portal', request.url));
+  // ── Block customer and SP roles from all operator routes ──────────────────
+  if ((isCustomer || isSp) && OPERATOR_ONLY_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.redirect(new URL(isSp ? '/sp' : '/portal', request.url));
   }
 
-  // ── Block operator roles from customer portal ─────────────────────────────
-  if (isOperator && pathname.startsWith('/portal')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  // ── Block operator and SP roles from customer portal ──────────────────────
+  if ((isOperator || isSp) && pathname.startsWith('/portal')) {
+    return NextResponse.redirect(new URL(isOperator ? '/dashboard' : '/sp', request.url));
+  }
+
+  // ── Block non-SP roles from SP portal ─────────────────────────────────────
+  if (!isSp && pathname.startsWith('/sp')) {
+    const destination = isCustomer ? '/portal' : '/dashboard';
+    return NextResponse.redirect(new URL(destination, request.url));
+  }
+
+  // ── SP portal: admin-only pages ───────────────────────────────────────────
+  if (isSp && role !== 'sp_admin' && SP_ADMIN_ONLY_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.redirect(new URL('/sp', request.url));
+  }
+
+  // ── SP portal: report pages require sp_admin or sp_report ─────────────────
+  if (
+    isSp &&
+    role !== 'sp_admin' &&
+    role !== 'sp_report' &&
+    SP_REPORT_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p))
+  ) {
+    return NextResponse.redirect(new URL('/sp', request.url));
+  }
+
+  // ── SP portal: sp_viewer and sp_report cannot use write routes ────────────
+  if (
+    isSp &&
+    (role === 'sp_viewer' || role === 'sp_report') &&
+    SP_WRITE_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p))
+  ) {
+    return NextResponse.redirect(new URL('/sp/cross-connects', request.url));
   }
 
   // ── customer_viewer: read-only — block mutation-oriented pages ────────────

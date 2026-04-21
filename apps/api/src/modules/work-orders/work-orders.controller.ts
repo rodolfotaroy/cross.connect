@@ -1,5 +1,6 @@
 ﻿import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { z } from 'zod';
 import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -15,6 +16,9 @@ import {
   ProgressWorkOrderDto,
 } from './dto/work-order.dto';
 import { WorkOrdersService } from './work-orders.service';
+
+const HoldWorkOrderDto = z.object({ holdReason: z.string().min(1) });
+type HoldWorkOrderDto = z.infer<typeof HoldWorkOrderDto>;
 
 @ApiTags('work-orders')
 @ApiBearerAuth()
@@ -34,7 +38,9 @@ export class WorkOrdersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get work order detail with tasks' })
-  getOne(@Param('id') id: string) { return this.svc.getWorkOrder(id); }
+  getOne(@Param('id') id: string) {
+    return this.svc.getWorkOrder(id);
+  }
 
   @Post()
   @Roles('super_admin', 'ops_manager')
@@ -77,7 +83,9 @@ export class WorkOrdersController {
 
   @Patch(':id/test-failed')
   @Roles('super_admin', 'ops_manager', 'ops_technician')
-  @ApiOperation({ summary: 'Test failed — return to in_progress for remediation (pending_test -> in_progress)' })
+  @ApiOperation({
+    summary: 'Test failed — return to in_progress for remediation (pending_test -> in_progress)',
+  })
   testFailed(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(ProgressWorkOrderDto)) dto: ProgressWorkOrderDto,
@@ -106,5 +114,23 @@ export class WorkOrdersController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.svc.cancel(id, dto, user.id);
+  }
+
+  @Patch(':id/hold')
+  @Roles('super_admin', 'ops_manager', 'ops_technician')
+  @ApiOperation({ summary: 'Place work order on hold (assigned | in_progress -> on_hold)' })
+  hold(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(HoldWorkOrderDto)) dto: HoldWorkOrderDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.svc.hold(id, dto.holdReason, user.id);
+  }
+
+  @Patch(':id/release-hold')
+  @Roles('super_admin', 'ops_manager', 'ops_technician')
+  @ApiOperation({ summary: 'Release hold — return work order to in_progress' })
+  releaseHold(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.svc.releaseHold(id, user.id);
   }
 }

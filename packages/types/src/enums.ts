@@ -17,6 +17,11 @@ export const UserRole = {
   customer_admin: 'customer_admin',
   customer_orderer: 'customer_orderer',
   customer_viewer: 'customer_viewer',
+  // Dedicated-portal roles
+  sp_admin: 'sp_admin',
+  sp_ops: 'sp_ops',
+  sp_viewer: 'sp_viewer',
+  sp_report: 'sp_report',
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
@@ -25,6 +30,7 @@ export const OrderState = {
   submitted: 'submitted',
   under_review: 'under_review', // ops feasibility check phase
   pending_approval: 'pending_approval', // feasibility passed; awaiting manager sign-off
+  on_hold: 'on_hold', // paused by ops while awaiting customer clarification
   approved: 'approved',
   rejected: 'rejected',
   cancelled: 'cancelled',
@@ -37,6 +43,7 @@ export const ServiceState = {
   suspended: 'suspended',
   pending_disconnect: 'pending_disconnect',
   disconnected: 'disconnected',
+  expired: 'expired', // terminal: temporary service passed expiresAt without renewal
 } as const;
 export type ServiceState = (typeof ServiceState)[keyof typeof ServiceState];
 
@@ -44,6 +51,7 @@ export const WorkOrderState = {
   created: 'created',
   assigned: 'assigned',
   in_progress: 'in_progress',
+  on_hold: 'on_hold', // paused pending parts, access, or management decision
   pending_test: 'pending_test',
   completed: 'completed',
   cancelled: 'cancelled',
@@ -156,6 +164,9 @@ export type DocumentType = (typeof DocumentType)[keyof typeof DocumentType];
 export const BillingEventType = {
   service_activated: 'service_activated',
   service_disconnected: 'service_disconnected',
+  service_suspended: 'service_suspended',
+  service_resumed: 'service_resumed',
+  service_expired: 'service_expired',
   temporary_extended: 'temporary_extended',
   reroute_completed: 'reroute_completed',
 } as const;
@@ -215,3 +226,40 @@ export const WorkOrderTaskState = {
   skipped: 'skipped',
 } as const;
 export type WorkOrderTaskState = (typeof WorkOrderTaskState)[keyof typeof WorkOrderTaskState];
+
+// ── Dedicated Portal ──────────────────────────────────────────────────────────
+
+export const DedicatedXcStatus = {
+  draft: 'draft',
+  submitted: 'submitted',
+  in_progress: 'in_progress',
+  completed: 'completed',
+  disconnected: 'disconnected',
+  cancelled: 'cancelled',
+} as const;
+export type DedicatedXcStatus = (typeof DedicatedXcStatus)[keyof typeof DedicatedXcStatus];
+
+export const TicketCategory = {
+  issue: 'issue',
+  suggestion: 'suggestion',
+  billing: 'billing',
+  access: 'access',
+  other: 'other',
+} as const;
+export type TicketCategory = (typeof TicketCategory)[keyof typeof TicketCategory];
+
+export const TicketPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+export type TicketPriority = (typeof TicketPriority)[keyof typeof TicketPriority];
+
+export const TicketStatus = {
+  open: 'open',
+  in_progress: 'in_progress',
+  resolved: 'resolved',
+  closed: 'closed',
+} as const;
+export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];

@@ -28,9 +28,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
-  async refresh(
-    @Body(new ZodValidationPipe(RefreshTokenDto)) body: RefreshTokenDto,
-  ) {
+  async refresh(@Body(new ZodValidationPipe(RefreshTokenDto)) body: RefreshTokenDto) {
     return this.authService.refresh(body.refreshToken);
   }
 
@@ -40,5 +38,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   async me(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.getProfile(user.id);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Invalidate the current refresh token' })
+  async logout(@CurrentUser() user: AuthenticatedUser) {
+    await this.authService.logout(user.id);
   }
 }

@@ -45,4 +45,13 @@ export class JobsService implements OnModuleInit, OnModuleDestroy {
   async work<T extends object>(queue: string, handler: JobHandler<T>): Promise<void> {
     await this.boss.work<T>(queue, (jobs) => handler(jobs[0]));
   }
+
+  async schedule<T extends object>(
+    queue: string,
+    cron: string,
+    data: T,
+    options?: PgBoss.SendOptions,
+  ): Promise<void> {
+    await this.boss.schedule(queue, cron, data, options);
+  }
 }

@@ -1,17 +1,17 @@
 ﻿/**
- * packages/db/src/seed.ts â€” Comprehensive CrossConnect MVP demo seed
+ * packages/db/src/seed.ts — Comprehensive CrossConnect MVP demo seed
  *
  * Topology:
  *   Site: DC1-IAD (Ashburn, VA)
- *   â””â”€ Building: MAIN
- *      â”œâ”€ Room: MMR-1   (mmr)          â€“ carrier ODF + demarc panels
- *      â”œâ”€ Room: TC-B1   (telco_closet) â€“ backbone patch panels
- *      â”œâ”€ Room: SUITE-4 (standard)     â€“ Acme Corp cage
- *      â””â”€ Room: SUITE-7 (standard)     â€“ Globex Industries cage
+ *   └─ Building: MAIN
+ *      ├─ Room: MMR-1   (mmr)          – carrier ODF + demarc panels
+ *      ├─ Room: TC-B1   (telco_closet) – backbone patch panels
+ *      ├─ Room: SUITE-4 (standard)     – Acme Corp cage
+ *      └─ Room: SUITE-7 (standard)     – Globex Industries cage
  *
  * Orgs:  DC-OPS (operator), ACME, GLOBEX (customers), ATTNET, EQFAB (carriers), AWSONRAMP (cloud)
  * Users: admin, ops-manager, ops-tech, alice (acme admin), bob (acme viewer), carol (globex admin)
- * Orders: XCO-DEMO-001 (draft) â€¦ XCO-DEMO-006 (cancelled) covering all states
+ * Orders: XCO-DEMO-001 (draft) … XCO-DEMO-006 (cancelled) covering all states
  */
 
 import * as bcrypt from 'bcryptjs';
@@ -35,7 +35,7 @@ import {
 
 const prisma = new PrismaClient();
 
-// â”€â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── helpers ────────────────────────────────────────────────────────────────
 
 function mkPorts(
   panelId: string,
@@ -62,11 +62,11 @@ function mkPorts(
 }
 
 async function main() {
-  console.log('ðŸŒ±  Seeding CrossConnect MVP demo dataâ€¦');
+  console.log('🌱  Seeding CrossConnect MVP demo data…');
 
   const HASH = await bcrypt.hash('changeme123!', 12);
 
-  // â”€â”€ Organizations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Organizations ────────────────────────────────────────────────────────
 
   const operatorOrg = await prisma.organization.upsert({
     where: { code: 'DC-OPS' },
@@ -136,9 +136,9 @@ async function main() {
     },
   });
 
-  console.log('  âœ“ Organizations (6)');
+  console.log('  ✓ Organizations (6)');
 
-  // â”€â”€ Users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Users ────────────────────────────────────────────────────────────────
 
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@crossconnect.local' },
@@ -244,9 +244,9 @@ async function main() {
       orgId: acmeOrg.id,
     },
   });
-  console.log('  ✓ Users (8)');
+  console.log('  ? Users (8)');
 
-  // â”€â”€ Site + Building â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Site + Building ──────────────────────────────────────────────────────
 
   const site = await prisma.site.upsert({
     where: { code: 'DC1-IAD' },
@@ -289,9 +289,9 @@ async function main() {
     },
   });
 
-  console.log('  âœ“ Site + Building');
+  console.log('  ✓ Site + Building');
 
-  // â”€â”€ Rooms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Rooms ────────────────────────────────────────────────────────────────
 
   const mmrRoom = await prisma.room.upsert({
     where: { buildingId_code: { buildingId: mainBuilding.id, code: 'MMR-1' } },
@@ -323,7 +323,7 @@ async function main() {
     update: {},
     create: {
       buildingId: mainBuilding.id,
-      name: 'Suite 4 â€“ Acme Corp',
+      name: 'Suite 4 – Acme Corp',
       code: 'SUITE-4',
       roomType: RoomType.standard,
       floor: '2',
@@ -335,16 +335,16 @@ async function main() {
     update: {},
     create: {
       buildingId: mainBuilding.id,
-      name: 'Suite 7 â€“ Globex Industries',
+      name: 'Suite 7 – Globex Industries',
       code: 'SUITE-7',
       roomType: RoomType.standard,
       floor: '2',
     },
   });
 
-  console.log('  âœ“ Rooms (4)');
+  console.log('  ✓ Rooms (4)');
 
-  // â”€â”€ MMR panels (carrier ODFs + demarc strips) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── MMR panels (carrier ODFs + demarc strips) ────────────────────────────
 
   const mmrOdf1 = await prisma.panel.upsert({
     where: { id: 'seed-mmr-odf-01' },
@@ -463,16 +463,16 @@ async function main() {
     }
   }
 
-  console.log('  âœ“ MMR Panels + Ports');
+  console.log('  ✓ MMR Panels + Ports');
 
-  // â”€â”€ Suite 4 â€“ Acme Corp: cage â†’ rack â†’ panels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Suite 4 – Acme Corp: cage → rack → panels ───────────────────────────
 
   const acmeCage = await prisma.cage.upsert({
     where: { roomId_code: { roomId: suite4.id, code: 'CAGE-4A' } },
     update: {},
     create: {
       roomId: suite4.id,
-      name: 'Cage 4A â€“ Acme Corp',
+      name: 'Cage 4A – Acme Corp',
       code: 'CAGE-4A',
       ownerOrgId: acmeOrg.id,
     },
@@ -591,16 +591,16 @@ async function main() {
     }
   }
 
-  console.log('  âœ“ Acme Corp Cage / Racks / Panels');
+  console.log('  ✓ Acme Corp Cage / Racks / Panels');
 
-  // â”€â”€ Suite 7 â€“ Globex Industries: cage â†’ rack â†’ panels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Suite 7 – Globex Industries: cage → rack → panels ───────────────────
 
   const globexCage = await prisma.cage.upsert({
     where: { roomId_code: { roomId: suite7.id, code: 'CAGE-7B' } },
     update: {},
     create: {
       roomId: suite7.id,
-      name: 'Cage 7B â€“ Globex Industries',
+      name: 'Cage 7B – Globex Industries',
       code: 'CAGE-7B',
       ownerOrgId: globexOrg.id,
     },
@@ -631,9 +631,9 @@ async function main() {
     });
   }
 
-  console.log('  âœ“ Globex Industries Cage / Racks / Panels');
+  console.log('  ✓ Globex Industries Cage / Racks / Panels');
 
-  // â”€â”€ DemarcPoints (carrier handoffs in the MMR) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── DemarcPoints (carrier handoffs in the MMR) ───────────────────────────
 
   await prisma.demarcPoint.upsert({
     where: { id: 'seed-demarc-carrier-a' },
@@ -653,7 +653,7 @@ async function main() {
     update: {},
     create: {
       id: 'seed-demarc-att-primary',
-      name: 'AT&T Primary Demarc â€“ MMR-1',
+      name: 'AT&T Primary Demarc – MMR-1',
       demarcType: DemarcType.carrier,
       organizationId: attOrg.id,
       roomId: mmrRoom.id,
@@ -668,7 +668,7 @@ async function main() {
     update: {},
     create: {
       id: 'seed-demarc-eq-primary',
-      name: 'Equinix Fabric Demarc â€“ MMR-1',
+      name: 'Equinix Fabric Demarc – MMR-1',
       demarcType: DemarcType.carrier,
       organizationId: equinixOrg.id,
       roomId: mmrRoom.id,
@@ -682,7 +682,7 @@ async function main() {
     update: {},
     create: {
       id: 'seed-demarc-aws-primary',
-      name: 'AWS Direct Connect Demarc â€“ MMR-1',
+      name: 'AWS Direct Connect Demarc – MMR-1',
       demarcType: DemarcType.cloud_onramp,
       organizationId: awsOrg.id,
       roomId: mmrRoom.id,
@@ -691,9 +691,9 @@ async function main() {
     },
   });
 
-  console.log('  âœ“ DemarcPoints (4)');
+  console.log('  ✓ DemarcPoints (4)');
 
-  // â”€â”€ Cross-Connect Orders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cross-Connect Orders ─────────────────────────────────────────────────
 
   const order001 = await prisma.crossConnectOrder.upsert({
     where: { orderNumber: 'XCO-DEMO-001' },
@@ -706,7 +706,7 @@ async function main() {
       mediaType: MediaType.smf,
       speedGbps: new Prisma.Decimal('10'),
       customerReference: 'ACME-PO-2024-001',
-      notes: 'Primary internet transit â€“ 10G SMF handoff to AT&T at IAD-1 MMR',
+      notes: 'Primary internet transit – 10G SMF handoff to AT&T at IAD-1 MMR',
       state: OrderState.draft,
     },
   });
@@ -800,13 +800,13 @@ async function main() {
       state: OrderState.cancelled,
       submittedAt: new Date(Date.now() - 20 * 86400_000),
       cancelledAt: new Date(Date.now() - 18 * 86400_000),
-      cancelledReason: 'Backup path no longer required â€“ primary circuit restored.',
+      cancelledReason: 'Backup path no longer required – primary circuit restored.',
     },
   });
 
-  console.log('  âœ“ Cross-Connect Orders (6 demo orders)');
+  console.log('  ✓ Cross-Connect Orders (6 demo orders)');
 
-  // â”€â”€ OrderEndpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── OrderEndpoints ───────────────────────────────────────────────────────
 
   async function seedEndpoints(
     orderId: string,
@@ -883,9 +883,9 @@ async function main() {
     },
   );
 
-  console.log('  âœ“ Order Endpoints');
+  console.log('  ✓ Order Endpoints');
 
-  // â”€â”€ Active service for approved order (XCO-DEMO-004) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Active service for approved order (XCO-DEMO-004) ─────────────────────
 
   if (!(await prisma.crossConnectService.findFirst({ where: { orderId: order004.id } }))) {
     const svc = await prisma.crossConnectService.create({
@@ -918,11 +918,11 @@ async function main() {
         },
       ],
     });
-    console.log('  âœ“ CrossConnectService XCS-DEMO-0001 (provisioning)');
+    console.log('  ✓ CrossConnectService XCS-DEMO-0001 (provisioning)');
   }
-  // ── Additional completed orders → active/suspended services ───────────────
+  // -- Additional completed orders ? active/suspended services ---------------
 
-  // Order 007: Acme → AT&T carrier (active, 100G)
+  // Order 007: Acme ? AT&T carrier (active, 100G)
   const order007 = await prisma.crossConnectOrder.upsert({
     where: { orderNumber: 'XCO-DEMO-007' },
     update: {},
@@ -975,10 +975,10 @@ async function main() {
         },
       ],
     });
-    console.log('  ✔ CrossConnectService XCS-DEMO-0002 (active, Acme → AT&T 100G)');
+    console.log('  ? CrossConnectService XCS-DEMO-0002 (active, Acme ? AT&T 100G)');
   }
 
-  // Order 008: Globex → AWS cloud onramp (active, 10G)
+  // Order 008: Globex ? AWS cloud onramp (active, 10G)
   const order008 = await prisma.crossConnectOrder.upsert({
     where: { orderNumber: 'XCO-DEMO-008' },
     update: {},
@@ -1031,10 +1031,10 @@ async function main() {
         },
       ],
     });
-    console.log('  ✔ CrossConnectService XCS-DEMO-0003 (active, Globex → AWS 10G)');
+    console.log('  ? CrossConnectService XCS-DEMO-0003 (active, Globex ? AWS 10G)');
   }
 
-  // Order 009: Acme → Equinix Fabric (active, 1G)
+  // Order 009: Acme ? Equinix Fabric (active, 1G)
   const order009 = await prisma.crossConnectOrder.upsert({
     where: { orderNumber: 'XCO-DEMO-009' },
     update: {},
@@ -1087,10 +1087,10 @@ async function main() {
         },
       ],
     });
-    console.log('  ✔ CrossConnectService XCS-DEMO-0004 (active, Acme → Equinix 1G)');
+    console.log('  ? CrossConnectService XCS-DEMO-0004 (active, Acme ? Equinix 1G)');
   }
 
-  // Order 010: Acme → Globex (temporary, suspended)
+  // Order 010: Acme ? Globex (temporary, suspended)
   const order010 = await prisma.crossConnectOrder.upsert({
     where: { orderNumber: 'XCO-DEMO-010' },
     update: {},
@@ -1146,10 +1146,197 @@ async function main() {
         },
       ],
     });
-    console.log('  ✔ CrossConnectService XCS-DEMO-0005 (suspended, Acme → Globex temp 10G)');
+    console.log('  ? CrossConnectService XCS-DEMO-0005 (suspended, Acme ? Globex temp 10G)');
   }
+
+  // -- Dedicated Partner Portal (SP) seed ------------------------------------
+
+  const spOrg = await prisma.organization.upsert({
+    where: { code: 'SP-DEMO' },
+    update: {},
+    create: {
+      name: 'Demo Service Partner',
+      code: 'SP-DEMO',
+      orgType: OrgType.customer,
+      isDedicated: true,
+      dedicatedConfig: { notificationsEmail: 'sp-noc@sp-demo.example.com' },
+      contactEmail: 'admin@sp-demo.example.com',
+    },
+  });
+  console.log('  ? SP org SP-DEMO');
+
+  const spAdminUser = await prisma.user.upsert({
+    where: { email: 'sp-admin@sp-demo.example.com' },
+    update: {},
+    create: {
+      firstName: 'SP',
+      lastName: 'Admin',
+      email: 'sp-admin@sp-demo.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_admin,
+      orgId: spOrg.id,
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: 'sp-ops@sp-demo.example.com' },
+    update: {},
+    create: {
+      firstName: 'SP',
+      lastName: 'Operations',
+      email: 'sp-ops@sp-demo.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_ops,
+      orgId: spOrg.id,
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: 'sp-viewer@sp-demo.example.com' },
+    update: {},
+    create: {
+      firstName: 'SP',
+      lastName: 'Viewer',
+      email: 'sp-viewer@sp-demo.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_viewer,
+      orgId: spOrg.id,
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: 'sp-report@sp-demo.example.com' },
+    update: {},
+    create: {
+      firstName: 'SP',
+      lastName: 'Reports',
+      email: 'sp-report@sp-demo.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_report,
+      orgId: spOrg.id,
+    },
+  });
+  console.log('  ? SP users (sp_admin, sp_ops, sp_viewer, sp_report)');
+
+  // Look up DC1-IAD site for hop references
+  const spDemoSite = await prisma.site.findFirst({ where: { code: 'DC1-IAD' } });
+
+  const xcStatuses = [
+    {
+      status: 'completed',
+      mrc: 450,
+      nrc: 500,
+      dateCompleted: new Date('2024-03-15'),
+      year: 2024,
+      quarter: 1,
+    },
+    {
+      status: 'completed',
+      mrc: 320,
+      nrc: 200,
+      dateCompleted: new Date('2024-06-20'),
+      year: 2024,
+      quarter: 2,
+    },
+    { status: 'in_progress', mrc: 600, nrc: 750, year: 2024, quarter: 4 },
+    { status: 'in_progress', mrc: 280, nrc: 300, year: 2025, quarter: 1 },
+    { status: 'draft', mrc: null, nrc: null, year: 2025, quarter: 2 },
+    { status: 'submitted', mrc: 500, nrc: 400, year: 2025, quarter: 2 },
+    { status: 'cancelled', mrc: 150, nrc: 100, year: 2024, quarter: 3 },
+    {
+      status: 'disconnected',
+      mrc: 200,
+      nrc: 250,
+      dateCompleted: new Date('2023-10-01'),
+      dateDisconnected: new Date('2024-01-01'),
+      year: 2023,
+      quarter: 4,
+    },
+  ] as const;
+
+  for (let i = 0; i < xcStatuses.length; i++) {
+    const s = xcStatuses[i];
+    const xcId = `SP-DEMO-XC-${String(i + 1).padStart(4, '0')}`;
+    const existing = await prisma.dedicatedCrossConnect.findFirst({
+      where: { crossConnectId: xcId },
+    });
+    if (!existing) {
+      await prisma.dedicatedCrossConnect.create({
+        data: {
+          crossConnectId: xcId,
+          organizationId: spOrg.id,
+          createdById: spAdminUser.id,
+          status: s.status as any,
+          orderingCompany: `Carrier ${i + 1}`,
+          circuitId: `CKT-${100 + i}`,
+          cableType: i % 2 === 0 ? 'SMF' : 'MMF',
+          customerType: i % 3 === 0 ? 'enterprise' : 'carrier',
+          mrc: s.mrc ? new Prisma.Decimal(s.mrc) : null,
+          nrc: s.nrc ? new Prisma.Decimal(s.nrc) : null,
+          year: s.year,
+          quarter: s.quarter,
+          siteId: spDemoSite?.id ?? null,
+          dateCompleted: (s as any).dateCompleted ?? null,
+          disconnectionDate: (s as any).dateDisconnected ?? null,
+          hops: {
+            create: [
+              {
+                hopNumber: 1,
+                room: `MMR`,
+                rack: `A${i + 1}`,
+                device: `PATCH-A${i + 1}`,
+                port: `01`,
+              },
+              {
+                hopNumber: 2,
+                room: `TC-B1`,
+                rack: `B${i + 1}`,
+                device: `PATCH-B${i + 1}`,
+                port: `01`,
+              },
+            ],
+          },
+        },
+      });
+    }
+  }
+  console.log('  ? 8 DedicatedCrossConnect records');
+
+  // Support tickets
+  const ticketData = [
+    {
+      subject: 'Circuit CKT-100 intermittent loss',
+      category: 'issue',
+      priority: 'high',
+      status: 'open',
+    },
+    {
+      subject: 'Request additional 10G port',
+      category: 'suggestion',
+      priority: 'medium',
+      status: 'in_progress',
+    },
+    { subject: 'Invoice discrepancy Q1', category: 'billing', priority: 'low', status: 'resolved' },
+  ];
+  for (const t of ticketData) {
+    const exists = await prisma.supportTicket.findFirst({
+      where: { subject: t.subject, organizationId: spOrg.id },
+    });
+    if (!exists) {
+      await prisma.supportTicket.create({
+        data: {
+          organizationId: spOrg.id,
+          createdById: spAdminUser.id,
+          subject: t.subject,
+          description: `Demo ticket: ${t.subject}`,
+          category: t.category as any,
+          priority: t.priority as any,
+          status: t.status as any,
+        },
+      });
+    }
+  }
+  console.log('  ? 3 SupportTicket records');
+
   console.log(`
-âœ…  Seed complete!
+✅  Seed complete!
 
 Demo credentials  (password: changeme123!)
   admin@crossconnect.local      super_admin
@@ -1160,12 +1347,16 @@ Demo credentials  (password: changeme123!)
   dave@acme.example.com         customer_viewer (Acme Corp)
   carol@globex.example.com      customer_admin  (Globex Industries)
   customer@acme.example         customer_admin  (legacy alias)
+  sp-admin@sp-demo.example.com  sp_admin        (Demo Service Partner)
+  sp-ops@sp-demo.example.com    sp_ops          (Demo Service Partner)
+  sp-viewer@sp-demo.example.com sp_viewer       (Demo Service Partner)
+  sp-report@sp-demo.example.com sp_report       (Demo Service Partner)
 
 Orders:
   XCO-DEMO-001  draft
   XCO-DEMO-002  submitted
   XCO-DEMO-003  under_review
-  XCO-DEMO-004  approved â†’ service XCS-DEMO-0001 (provisioning)
+  XCO-DEMO-004  approved → service XCS-DEMO-0001 (provisioning)
   XCO-DEMO-005  rejected
   XCO-DEMO-006  cancelled
 `);

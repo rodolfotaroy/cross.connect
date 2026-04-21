@@ -44,6 +44,11 @@ enum UserRole {
   customer_admin
   customer_orderer
   customer_viewer
+  // Dedicated portal roles
+  sp_admin
+  sp_ops
+  sp_viewer
+  sp_report
 }
 
 enum MediaType {
@@ -117,6 +122,7 @@ enum OrderState {
   submitted
   under_review // ops feasibility check phase
   pending_approval // feasibility passed; awaiting manager approval
+  on_hold // paused by ops while awaiting customer clarification / extra docs
   approved
   rejected
   cancelled
@@ -135,6 +141,7 @@ enum ServiceState {
   suspended
   pending_disconnect
   disconnected
+  expired // terminal: temporary service passed its expiresAt without renewal
 }
 
 enum EndpointSide {
@@ -189,6 +196,7 @@ enum WorkOrderState {
   created
   assigned
   in_progress
+  on_hold // paused pending parts, access, or management decision
   pending_test
   completed
   cancelled
@@ -224,8 +232,44 @@ enum DocumentType {
 enum BillingEventType {
   service_activated
   service_disconnected
+  service_suspended // MRC pause starts (contractual; billing system decides)
+  service_resumed // MRC resumes
+  service_expired // temporary XC passed expiresAt without renewal
   temporary_extended
   reroute_completed
+}
+
+// ── Dedicated Portal Enums ────────────────────────────────────────────────────
+
+enum DedicatedXcStatus {
+  draft
+  submitted
+  in_progress
+  completed
+  disconnected
+  cancelled
+}
+
+enum TicketCategory {
+  issue
+  suggestion
+  billing
+  access
+  other
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+  critical
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  closed
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -235,20 +279,25 @@ enum BillingEventType {
 // Organization owns Users and may be a customer, carrier, operator, etc.
 // A single platform deployment has one operator org; all others are tenants.
 model Organization {
-  id           String  @id @default(cuid())
-  name         String
-  code         String  @unique // short alphanumeric identifier: "ACME", "AT-T", "AWS"
-  orgType      OrgType
-  isActive     Boolean @default(true)
-  contactEmail String?
-  contactPhone String?
-  notes        String?
+  id              String  @id @default(cuid())
+  name            String
+  code            String  @unique // short alphanumeric identifier: "ACME", "AT-T", "AWS"
+  orgType         OrgType
+  isActive        Boolean @default(true)
+  contactEmail    String?
+  contactPhone    String?
+  notes           String?
+  // Dedicated portal — marks an org as a dedicated-portal tenant
+  isDedicated     Boolean @default(false)
+  dedicatedConfig Json? // per-org settings: branding, contact, feature flags
 
   users            User[]
   ordersRequested  CrossConnectOrder[]
   orderEndpoints   OrderEndpoint[]
   serviceEndpoints ServiceEndpoint[]
   demarcPoints     DemarcPoint[]
+  dedicatedXcs     DedicatedCrossConnect[]
+  supportTickets   SupportTicket[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -260,23 +309,29 @@ model Organization {
 // User belongs to exactly one Organization.
 // Role enforces what the user can see and do across the platform.
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         UserRole
-  orgId        String
-  org          Organization @relation(fields: [orgId], references: [id])
-  isActive     Boolean      @default(true)
-  lastLoginAt  DateTime?
+  id                    String       @id @default(cuid())
+  email                 String       @unique
+  passwordHash          String
+  firstName             String
+  lastName              String
+  role                  UserRole
+  orgId                 String
+  org                   Organization @relation(fields: [orgId], references: [id])
+  isActive              Boolean      @default(true)
+  lastLoginAt           DateTime?
+  refreshTokenHash      String? // bcrypt hash of most recently issued refresh token
+  refreshTokenExpiresAt DateTime? // used to validate and prune stale tokens
 
-  ordersSubmitted    CrossConnectOrder[] @relation("OrderSubmittedBy")
-  ordersApproved     CrossConnectOrder[] @relation("OrderApprovedBy")
-  workOrdersAssigned WorkOrder[]
-  approvalSteps      ApprovalStep[]
-  portReservations   PortReservation[]
-  auditEvents        AuditEvent[]
+  ordersSubmitted     CrossConnectOrder[]     @relation("OrderSubmittedBy")
+  ordersApproved      CrossConnectOrder[]     @relation("OrderApprovedBy")
+  workOrdersAssigned  WorkOrder[]
+  approvalSteps       ApprovalStep[]
+  portReservations    PortReservation[]
+  auditEvents         AuditEvent[]
+  dedicatedXcsCreated DedicatedCrossConnect[] @relation("dedicatedXcCreator")
+  ticketsCreated      SupportTicket[]         @relation("ticketCreator")
+  ticketsResolved     SupportTicket[]         @relation("ticketResolver")
+  ticketComments      TicketComment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -306,6 +361,8 @@ model Site {
   notes    String?
 
   buildings Building[]
+
+  dedicatedXcs DedicatedCrossConnect[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -390,11 +447,11 @@ model Cage {
 // Exactly one of cageId (cage-mounted) or roomId (room-level) must be set.
 // Code uniqueness within its parent is enforced at the application layer.
 model Rack {
-  id     String @id @default(cuid())
-  cageId String? // null = room-level rack (not in a cage)
-  cage   Cage?   @relation(fields: [cageId], references: [id])
-  roomId String? // null = cage-level rack; set directly for room-level racks
-  room   Room?   @relation(fields: [roomId], references: [id])
+  id       String  @id @default(cuid())
+  cageId   String? // null = room-level rack (not in a cage)
+  cage     Cage?   @relation(fields: [cageId], references: [id])
+  roomId   String? // null = cage-level rack; set directly for room-level racks
+  room     Room?   @relation(fields: [roomId], references: [id])
   name     String
   code     String
   uSize    Int     @default(42)
@@ -983,4 +1040,144 @@ model AuditEvent {
   @@index([orderId])
   @@index([serviceId])
   @@index([workOrderId])
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DEDICATED PORTAL — Layer 8
+// ══════════════════════════════════════════════════════════════════════════════
+
+// DedicatedCrossConnect: simplified, flat cross-connect record for dedicated
+// partner organisations. Not using the order→service two-layer model by design
+// — dedicated companies want a spreadsheet-like experience.
+model DedicatedCrossConnect {
+  id             String            @id @default(cuid())
+  crossConnectId String            @unique // Human-readable: "XC-0001" (auto-generated per org)
+  circuitId      String?
+  ticketNumber   String?
+  salesSource    String?
+  nrc            Decimal?          @db.Decimal(12, 2) // Non-Recurring Charge
+  mrc            Decimal?          @db.Decimal(12, 2) // Monthly Recurring Charge
+  serviceId      String?
+  status         DedicatedXcStatus @default(draft)
+
+  // Test report can be a free-form reference or a Document FK (suggestion #11)
+  testReport String? // human-readable reference or URL
+
+  siteId                     String?
+  site                       Site?     @relation(fields: [siteId], references: [id])
+  dateCompleted              DateTime?
+  year                       Int? // auto-derived from dateCompleted (overridable)
+  quarter                    Int? // 1-4, auto-derived from dateCompleted (overridable)
+  billableDate               DateTime?
+  disconnectionDate          DateTime?
+  requestedDisconnectionDate DateTime?
+  orderingCompany            String?
+
+  // A-End location (free-form strings — dedicated companies manage their own naming)
+  aEndCampus   String?
+  aEndBuilding String?
+  aEndFloor    String?
+  aEndRoom     String?
+  aEndRack     String?
+  aEndDevice   String?
+  aEndPort     String?
+
+  // Z-End location
+  zEndCampus   String?
+  zEndBuilding String?
+  zEndFloor    String?
+  zEndRoom     String?
+  zEndRack     String?
+  zEndDevice   String?
+  zEndPort     String?
+
+  customerType String?
+  cableType    String?
+  notes        String? // suggestion #10: free-form remarks
+
+  // Hops (dynamic list; hop #1 is the "1st Hop" from the original spec)
+  hops DedicatedXcHop[]
+
+  // Ownership
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdById    String
+  createdBy      User         @relation("dedicatedXcCreator", fields: [createdById], references: [id])
+
+  // Soft delete (suggestion #13)
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, deletedAt])
+  @@index([billableDate])
+  @@index([year, quarter])
+  @@index([createdById])
+}
+
+// DedicatedXcHop: one physical hop in a cross-connect path.
+// Hop #1 corresponds to the "1st Hop" in the original spec.
+model DedicatedXcHop {
+  id                      String                @id @default(cuid())
+  dedicatedCrossConnectId String
+  dedicatedCrossConnect   DedicatedCrossConnect @relation(fields: [dedicatedCrossConnectId], references: [id], onDelete: Cascade)
+  hopNumber               Int // 1-based ordering
+  room                    String?
+  rack                    String?
+  device                  String?
+  port                    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dedicatedCrossConnectId, hopNumber])
+  @@index([dedicatedCrossConnectId])
+}
+
+// SupportTicket: a simple ticketing system for dedicated portal users.
+model SupportTicket {
+  id          String         @id @default(cuid())
+  subject     String
+  description String
+  category    TicketCategory @default(issue)
+  priority    TicketPriority @default(medium)
+  status      TicketStatus   @default(open)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdById    String
+  createdBy      User         @relation("ticketCreator", fields: [createdById], references: [id])
+
+  // Resolution
+  resolvedAt     DateTime?
+  resolvedById   String?
+  resolvedBy     User?     @relation("ticketResolver", fields: [resolvedById], references: [id])
+  resolutionNote String?
+
+  comments TicketComment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([createdById])
+  @@index([status])
+}
+
+// TicketComment: threaded comment on a SupportTicket.
+model TicketComment {
+  id        String        @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  body      String
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id])
+  createdAt DateTime      @default(now())
+
+  @@index([ticketId])
+  @@index([authorId])
 }
