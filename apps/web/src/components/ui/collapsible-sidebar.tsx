@@ -143,7 +143,7 @@ export function CollapsibleSidebar({ title, subtitle, navItems, userLine1, userL
           type="button"
           title="Sign out"
           aria-label="Sign out"
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={async () => { await signOut({ redirect: false }); window.location.replace('/login'); }}
           className={`flex items-center gap-2 text-gray-400 hover:text-gray-100 transition-colors ${
             !isMobile && collapsed ? '' : 'mt-2'
           }`}
