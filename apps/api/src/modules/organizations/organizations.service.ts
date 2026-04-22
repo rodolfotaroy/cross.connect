@@ -72,8 +72,8 @@ export class OrganizationsService {
   // -- Users -----------------------------------------------------------------
 
   async listUsers(orgId: string, actor: AuthenticatedUser) {
-    // customer_admin may only list users within their own organisation.
-    if (actor.role === 'customer_admin' && orgId !== actor.orgId) {
+    // customer_admin and sp_admin may only list users within their own organisation.
+    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && orgId !== actor.orgId) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.findMany({
@@ -110,8 +110,8 @@ export class OrganizationsService {
     });
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
-    // customer_admin may only inspect users from their own organisation.
-    if (actor.role === 'customer_admin' && user.orgId !== actor.orgId) {
+    // customer_admin and sp_admin may only inspect users from their own organisation.
+    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && user.orgId !== actor.orgId) {
       throw new ForbiddenException('Access denied');
     }
     return user;
@@ -125,8 +125,8 @@ export class OrganizationsService {
       throw new ForbiddenException('Only super_admin can assign operator or super_admin roles');
     }
 
-    // customer_admin may only update users within their own organisation.
-    if (actor.role === 'customer_admin' && target.orgId !== actor.orgId) {
+    // customer_admin and sp_admin may only update users within their own organisation.
+    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.update({
@@ -145,7 +145,10 @@ export class OrganizationsService {
     });
   }
 
-  async createUser(orgId: string, dto: CreateUserDto) {
+  async createUser(orgId: string, dto: CreateUserDto, actor?: AuthenticatedUser) {
+    if (actor?.role === 'sp_admin' && orgId !== actor.orgId) {
+      throw new ForbiddenException('Access denied');
+    }
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ConflictException(`Email '${dto.email}' already registered`);
 
@@ -171,8 +174,8 @@ export class OrganizationsService {
   async deactivateUser(userId: string, actor: AuthenticatedUser) {
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    // customer_admin may only deactivate users within their own organisation.
-    if (actor.role === 'customer_admin' && target.orgId !== actor.orgId) {
+    // customer_admin and sp_admin may only deactivate users within their own organisation.
+    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.update({
@@ -185,8 +188,8 @@ export class OrganizationsService {
   async reactivateUser(userId: string, actor: AuthenticatedUser) {
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    // customer_admin may only reactivate users within their own organisation.
-    if (actor.role === 'customer_admin' && target.orgId !== actor.orgId) {
+    // customer_admin and sp_admin may only reactivate users within their own organisation.
+    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.update({
@@ -199,8 +202,8 @@ export class OrganizationsService {
   async updateUser(userId: string, dto: UpdateUserDto, actor: AuthenticatedUser) {
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    // customer_admin may only update users within their own organisation.
-    if (actor.role === 'customer_admin' && target.orgId !== actor.orgId) {
+    // customer_admin and sp_admin may only update users within their own organisation.
+    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
       throw new ForbiddenException('Access denied');
     }
 

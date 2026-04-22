@@ -62,38 +62,39 @@ export class OrganizationsController {
   // -- Users sub-resource ----------------------------------------------------
 
   @Get(':orgId/users')
-  @Roles('super_admin', 'ops_manager', 'ops_technician', 'customer_admin')
+  @Roles('super_admin', 'ops_manager', 'ops_technician', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'List users in an organization' })
   listUsers(@Param('orgId') orgId: string, @CurrentUser() actor: AuthenticatedUser) {
     return this.svc.listUsers(orgId, actor);
   }
 
   @Post(':orgId/users')
-  @Roles('super_admin', 'customer_admin')
+  @Roles('super_admin', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'Create a user and assign to an organization' })
   createUser(
     @Param('orgId') orgId: string,
     @Body(new ZodValidationPipe(CreateUserDto)) dto: CreateUserDto,
+    @CurrentUser() actor: AuthenticatedUser,
   ) {
-    return this.svc.createUser(orgId, dto);
+    return this.svc.createUser(orgId, dto, actor);
   }
 
   @Patch('users/:userId/deactivate')
-  @Roles('super_admin', 'customer_admin')
+  @Roles('super_admin', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'Deactivate a user account' })
   deactivateUser(@Param('userId') userId: string, @CurrentUser() actor: AuthenticatedUser) {
     return this.svc.deactivateUser(userId, actor);
   }
 
   @Get('users/:userId')
-  @Roles('super_admin', 'ops_manager', 'ops_technician', 'customer_admin')
+  @Roles('super_admin', 'ops_manager', 'ops_technician', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'Get a single user by id' })
   getUser(@Param('userId') userId: string, @CurrentUser() actor: AuthenticatedUser) {
     return this.svc.getUser(userId, actor);
   }
 
   @Patch('users/:userId/role')
-  @Roles('super_admin', 'customer_admin')
+  @Roles('super_admin', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'Update a user role' })
   updateUserRole(
     @Param('userId') userId: string,
@@ -104,7 +105,7 @@ export class OrganizationsController {
   }
 
   @Patch('users/:userId')
-  @Roles('super_admin', 'customer_admin')
+  @Roles('super_admin', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'Update user profile fields (name, email, role)' })
   updateUser(
     @Param('userId') userId: string,
@@ -115,7 +116,7 @@ export class OrganizationsController {
   }
 
   @Patch('users/:userId/reactivate')
-  @Roles('super_admin', 'customer_admin')
+  @Roles('super_admin', 'customer_admin', 'sp_admin')
   @ApiOperation({ summary: 'Reactivate a deactivated user account' })
   reactivateUser(@Param('userId') userId: string, @CurrentUser() actor: AuthenticatedUser) {
     return this.svc.reactivateUser(userId, actor);
