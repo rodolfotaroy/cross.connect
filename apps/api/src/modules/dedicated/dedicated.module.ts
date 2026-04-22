@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuditModule } from '../audit/audit.module';
+import { CustomerSupportController } from './support/customer-support.controller';
 import { DedicatedXcController } from './dedicated-xc/dedicated-xc.controller';
 import { DedicatedXcService } from './dedicated-xc/dedicated-xc.service';
 import { ReportsController } from './reports/reports.controller';
@@ -18,6 +19,7 @@ import { SpTeamService } from './team/sp-team.service';
     ReportsController,
     SupportController,
     OpSupportController,
+    CustomerSupportController,
     SpTeamController,
   ],
 })

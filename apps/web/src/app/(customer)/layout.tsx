@@ -20,6 +20,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
     { href: '/portal/orders', label: 'My Orders' },
     ...(canPlaceOrders ? [{ href: '/portal/orders/new', label: 'Request Cross-Connect' }] : []),
     { href: '/portal/services', label: 'Active Services' },
+    { href: '/portal/support', label: 'Support' },
   ];
 
   return (

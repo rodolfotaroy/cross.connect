@@ -19,7 +19,7 @@ export class SupportService {
   async listTickets(
     user: AuthenticatedUser,
     query: ListSupportTicketsInput,
-    portalFilter?: 'sp' | 'op',
+    portalFilter?: 'sp' | 'op' | 'customer',
   ) {
     const { page, limit, sortBy, sortDir, status, category } = query;
     const where: Record<string, unknown> = {};
@@ -73,7 +73,7 @@ export class SupportService {
   async createTicket(
     dto: CreateSupportTicketInput,
     user: AuthenticatedUser,
-    portal: 'sp' | 'op' = 'sp',
+    portal: 'sp' | 'op' | 'customer' = 'sp',
   ) {
     const orgId = user.orgId;
     if (!orgId) throw new ForbiddenException('An orgId is required to create a support ticket');
@@ -83,7 +83,7 @@ export class SupportService {
         where: { id: 1 },
         data: { lastUsed: { increment: 1 } },
       });
-      const prefix = portal === 'op' ? 'OP' : 'SP';
+      const prefix = portal === 'op' ? 'OP' : portal === 'customer' ? 'CU' : 'SP';
       const ticketNumber = `${prefix}${String(counter.lastUsed).padStart(6, '0')}`;
 
       return tx.supportTicket.create({
@@ -212,6 +212,36 @@ export class SupportService {
       },
       include: {
         author: { select: { id: true, firstName: true, lastName: true, email: true } },
+      },
+    });
+  }
+
+  /** Customer-portal ticket status update — customer_admin allowed, scoped to own org */
+  async updateTicketStatusCustomer(
+    ticketId: string,
+    dto: UpdateTicketStatusInput,
+    user: AuthenticatedUser,
+  ) {
+    if (user.role !== 'customer_admin') {
+      throw new ForbiddenException('customer_admin role required to update ticket status');
+    }
+    const ticket = await this.prisma.supportTicket.findFirst({
+      where: { id: ticketId, ...(user.orgId ? { organizationId: user.orgId } : {}) },
+    });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    const data: Record<string, unknown> = { status: dto.status };
+    if (dto.status === 'resolved' || dto.status === 'closed') {
+      data['resolvedAt'] = new Date();
+      data['resolvedById'] = user.id;
+      if (dto.resolutionNote) data['resolutionNote'] = dto.resolutionNote;
+    }
+    return this.prisma.supportTicket.update({
+      where: { id: ticketId },
+      data,
+      include: {
+        createdBy: { select: { id: true, firstName: true, lastName: true } },
+        resolvedBy: { select: { id: true, firstName: true, lastName: true } },
       },
     });
   }
