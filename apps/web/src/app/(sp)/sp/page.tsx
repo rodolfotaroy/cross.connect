@@ -30,7 +30,7 @@ export default async function SpDashboard() {
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const role = (session?.user as any)?.role as string;
-  const canReport = role === 'sp_admin' || role === 'sp_report';
+  const canReport = role === 'super_admin' || role === 'sp_admin' || role === 'sp_report';
 
   const [xcResult, supportResult, summaryResult] = await Promise.all([
     dedicatedXcApi

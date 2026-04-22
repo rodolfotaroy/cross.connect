@@ -21,7 +21,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const role = (session?.user as any)?.role as string;
-  const isAdmin = role === 'sp_admin';
+  const isAdmin = role === 'super_admin' || role === 'sp_admin';
 
   const ticket = await spSupportApi.getTicket(token, id).catch(() => null);
   if (!ticket) notFound();

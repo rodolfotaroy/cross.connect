@@ -17,7 +17,7 @@ export default async function SpCrossConnectsPage({
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const role = (session?.user as any)?.role as string;
-  const canWrite = role === 'sp_admin' || role === 'sp_ops';
+  const canWrite = role === 'super_admin' || role === 'sp_admin' || role === 'sp_ops';
 
   const page = Number(sp.page ?? '1');
   const result = await dedicatedXcApi

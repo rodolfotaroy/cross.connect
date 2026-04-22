@@ -14,8 +14,8 @@ export default async function XcDetailPage({ params }: { params: Promise<{ id: s
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const role = (session?.user as any)?.role as string;
-  const canWrite = role === 'sp_admin' || role === 'sp_ops';
-  const canReport = role === 'sp_admin' || role === 'sp_report';
+  const canWrite = role === 'super_admin' || role === 'sp_admin' || role === 'sp_ops';
+  const canReport = role === 'super_admin' || role === 'sp_admin' || role === 'sp_report';
 
   const xc = await dedicatedXcApi.getOne(token, id).catch(() => null);
   if (!xc) notFound();

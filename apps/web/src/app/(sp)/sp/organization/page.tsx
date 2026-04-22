@@ -13,6 +13,8 @@ export default async function SpOrganizationPage() {
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const currentUserId = (session?.user as any)?.id as string;
+  const role = (session?.user as any)?.role as string;
+  const isSuperAdmin = role === 'super_admin';
   const orgName = (session?.user as any)?.orgName as string | undefined;
 
   const users = await spTeamApi.list(token).catch(() => [] as any[]);
@@ -20,15 +22,17 @@ export default async function SpOrganizationPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={orgName ?? 'My Organization'}
-        subtitle="Service Partner"
+        title={isSuperAdmin ? 'All SP Users' : (orgName ?? 'My Organization')}
+        subtitle={isSuperAdmin ? 'All service partner team members across all organizations' : 'Service Partner'}
         actions={
-          <Link
-            href="/sp/organization/new"
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-          >
-            + Add Member
-          </Link>
+          !isSuperAdmin && (
+            <Link
+              href="/sp/organization/new"
+              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            >
+              + Add Member
+            </Link>
+          )
         }
       />
 
@@ -46,7 +50,7 @@ export default async function SpOrganizationPage() {
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Name', 'Email', 'Role', 'Status', 'Actions'].map((h) => (
+                    {['Name', 'Email', 'Role', ...(isSuperAdmin ? ['Organization'] : []), 'Status', 'Actions'].map((h) => (
                       <th
                         key={h}
                         scope="col"
@@ -75,6 +79,11 @@ export default async function SpOrganizationPage() {
                       <td className="whitespace-nowrap px-6 py-3 text-gray-600">
                         {ROLE_LABEL[u.role as keyof typeof ROLE_LABEL] ?? u.role}
                       </td>
+                      {isSuperAdmin && (
+                        <td className="whitespace-nowrap px-6 py-3 text-gray-500 text-xs">
+                          {u.organization?.name ?? '—'}
+                        </td>
+                      )}
                       <td className="whitespace-nowrap px-6 py-3">
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${u.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}

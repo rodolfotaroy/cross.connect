@@ -22,6 +22,7 @@ const USER_SELECT = {
   isActive: true,
   lastLoginAt: true,
   createdAt: true,
+  organization: { select: { id: true, name: true } },
 } as const;
 
 @Injectable()
@@ -29,16 +30,21 @@ export class SpTeamService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listUsers(user: AuthenticatedUser) {
+    // super_admin has no orgId — show all SP users across all orgs
+    const where = user.orgId
+      ? { orgId: user.orgId }
+      : { orgId: { not: null as any }, role: { in: ['sp_admin', 'sp_ops', 'sp_viewer', 'sp_report'] as any } };
     return this.prisma.user.findMany({
-      where: { orgId: user.orgId },
+      where,
       select: USER_SELECT,
       orderBy: { lastName: 'asc' },
     });
   }
 
   async getUser(userId: string, actor: AuthenticatedUser) {
+    const where = actor.orgId ? { id: userId, orgId: actor.orgId } : { id: userId };
     const found = await this.prisma.user.findFirst({
-      where: { id: userId, orgId: actor.orgId },
+      where,
       select: USER_SELECT,
     });
     if (!found) throw new NotFoundException('User not found');
@@ -48,6 +54,11 @@ export class SpTeamService {
   async createUser(dto: CreateSpUserInput, actor: AuthenticatedUser) {
     if (!SP_ASSIGNABLE_ROLES.has(dto.role)) {
       throw new ForbiddenException(`Cannot assign role '${dto.role}'`);
+    }
+    // super_admin must supply an orgId in the DTO (cast via any since schema doesn't include it yet)
+    const orgId = actor.orgId ?? (dto as any).orgId;
+    if (!orgId) {
+      throw new ForbiddenException('An orgId is required when creating SP users as super_admin');
     }
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already in use');
@@ -60,7 +71,7 @@ export class SpTeamService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         role: dto.role as any,
-        orgId: actor.orgId,
+        orgId,
       },
       select: USER_SELECT,
     });

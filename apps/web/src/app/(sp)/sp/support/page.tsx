@@ -29,7 +29,7 @@ export default async function SpSupportPage({
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const role = (session?.user as any)?.role as string;
-  const isAdmin = role === 'sp_admin';
+  const isAdmin = role === 'super_admin' || role === 'sp_admin';
 
   const page = Number(sp.page ?? '1');
 

@@ -72,8 +72,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(isOperator ? '/dashboard' : '/sp', request.url));
   }
 
-  // ── Block non-SP roles from SP portal ─────────────────────────────────────
-  if (!isSp && pathname.startsWith('/sp')) {
+  // ── Block non-SP roles from SP portal (super_admin is always allowed) ──────
+  if (!isSp && role !== 'super_admin' && pathname.startsWith('/sp')) {
     const destination = isCustomer ? '/portal' : '/dashboard';
     return NextResponse.redirect(new URL(destination, request.url));
   }
