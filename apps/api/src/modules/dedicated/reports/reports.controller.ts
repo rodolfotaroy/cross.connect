@@ -21,7 +21,7 @@ export class ReportsController {
   @Get('summary')
   @ApiOperation({ summary: 'Aggregated totals: count by status, total NRC/MRC, by quarter' })
   summary(@CurrentUser() user: AuthenticatedUser) {
-    return this.svc.getSummary(user.orgId);
+    return this.svc.getSummary(user.role === 'super_admin' ? null : user.orgId);
   }
 
   @Get('cross-connects')
@@ -30,7 +30,7 @@ export class ReportsController {
     @Query(new ZodValidationPipe(ListReportsSchema)) query: typeof ListReportsSchema._type,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.svc.listForReport(user.orgId, query);
+    return this.svc.listForReport(user.role === 'super_admin' ? null : user.orgId, query);
   }
 
   @Get('cross-connects/export')
@@ -40,7 +40,7 @@ export class ReportsController {
     @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
   ) {
-    const csv = await this.svc.exportCsv(user.orgId, query);
+    const csv = await this.svc.exportCsv(user.role === 'super_admin' ? null : user.orgId, query);
     const filename = `cross-connects-${new Date().toISOString().split('T')[0]}.csv`;
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

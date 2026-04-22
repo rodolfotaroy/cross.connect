@@ -30,10 +30,13 @@ export class SpTeamService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listUsers(user: AuthenticatedUser) {
-    // super_admin has no orgId — show all SP users across all orgs
-    const where = user.orgId
+    // super_admin has no orgId restriction — show all SP users across all orgs
+    const where = user.role !== 'super_admin' && user.orgId
       ? { orgId: user.orgId }
-      : { orgId: { not: null as any }, role: { in: ['sp_admin', 'sp_ops', 'sp_viewer', 'sp_report'] as any } };
+      : {
+          orgId: { not: null as any },
+          role: { in: ['sp_admin', 'sp_ops', 'sp_viewer', 'sp_report'] as any },
+        };
     return this.prisma.user.findMany({
       where,
       select: USER_SELECT,
@@ -42,7 +45,7 @@ export class SpTeamService {
   }
 
   async getUser(userId: string, actor: AuthenticatedUser) {
-    const where = actor.orgId ? { id: userId, orgId: actor.orgId } : { id: userId };
+    const where = actor.role !== 'super_admin' && actor.orgId ? { id: userId, orgId: actor.orgId } : { id: userId };
     const found = await this.prisma.user.findFirst({
       where,
       select: USER_SELECT,

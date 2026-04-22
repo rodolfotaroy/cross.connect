@@ -23,7 +23,11 @@ export default async function SpOrganizationPage() {
     <div className="space-y-6">
       <PageHeader
         title={isSuperAdmin ? 'All SP Users' : (orgName ?? 'My Organization')}
-        subtitle={isSuperAdmin ? 'All service partner team members across all organizations' : 'Service Partner'}
+        subtitle={
+          isSuperAdmin
+            ? 'All service partner team members across all organizations'
+            : 'Service Partner'
+        }
         actions={
           !isSuperAdmin && (
             <Link
@@ -50,7 +54,14 @@ export default async function SpOrganizationPage() {
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Name', 'Email', 'Role', ...(isSuperAdmin ? ['Organization'] : []), 'Status', 'Actions'].map((h) => (
+                    {[
+                      'Name',
+                      'Email',
+                      'Role',
+                      ...(isSuperAdmin ? ['Organization'] : []),
+                      'Status',
+                      'Actions',
+                    ].map((h) => (
                       <th
                         key={h}
                         scope="col"

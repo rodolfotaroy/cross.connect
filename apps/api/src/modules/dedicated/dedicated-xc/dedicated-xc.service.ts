@@ -61,7 +61,7 @@ export class DedicatedXcService {
     const { page, limit, sortBy, sortDir, status, q, year, quarter } = query;
     const where: Record<string, unknown> = { deletedAt: null };
     // super_admin sees all orgs; SP roles see only their own org
-    if (user.orgId) where['organizationId'] = user.orgId;
+    if (user.role !== 'super_admin' && user.orgId) where['organizationId'] = user.orgId;
     if (status) where['status'] = status;
     if (year) where['year'] = year;
     if (quarter) where['quarter'] = quarter;
@@ -94,7 +94,7 @@ export class DedicatedXcService {
 
   async getOne(id: string, user: AuthenticatedUser) {
     const record = await this.prisma.dedicatedCrossConnect.findFirst({
-      where: { id, ...(user.orgId ? { organizationId: user.orgId } : {}), deletedAt: null },
+      where: { id, ...(user.role !== 'super_admin' && user.orgId ? { organizationId: user.orgId } : {}), deletedAt: null },
       include: {
         hops: { orderBy: { hopNumber: 'asc' } },
         site: { select: { id: true, name: true, code: true } },
