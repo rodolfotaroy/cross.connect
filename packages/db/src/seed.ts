@@ -2682,7 +2682,12 @@ async function main() {
 
   let ticketCount = 0;
   const orgMap = { sp: spOrg, acme: acmeOrg, globex: globexOrg };
-  const userMap = { spAdmin: spAdminUser, admin: adminUser, acmeAdmin: acmeAdmin, globexAdmin: globexAdmin };
+  const userMap = {
+    spAdmin: spAdminUser,
+    admin: adminUser,
+    acmeAdmin: acmeAdmin,
+    globexAdmin: globexAdmin,
+  };
 
   for (const t of ticketSeeds) {
     const org = orgMap[t.orgKey];
@@ -2723,137 +2728,246 @@ async function main() {
   const customerTicketSeeds: TicketSeed[] = [
     // ── Acme Corp ─────────────────────────────────────────────────────────
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'XCO-DEMO-002 status inquiry',
-      description: 'We submitted order XCO-DEMO-002 two days ago for Equinix Fabric 100G. Could you please provide a status update and expected completion date?',
-      category: 'issue', priority: 'medium', status: 'open',
+      description:
+        'We submitted order XCO-DEMO-002 two days ago for Equinix Fabric 100G. Could you please provide a status update and expected completion date?',
+      category: 'issue',
+      priority: 'medium',
+      status: 'open',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'LOA document required for XCO-DEMO-007',
-      description: 'Please provide the LOA (Letter of Authorization) for service XCS-DEMO-0002 so we can share it with our carrier representative.',
-      category: 'access', priority: 'high', status: 'resolved',
-      resolutionNote: 'LOA-2026-ACME-0002 issued and uploaded to the order documents. Please download from your order detail page.',
+      description:
+        'Please provide the LOA (Letter of Authorization) for service XCS-DEMO-0002 so we can share it with our carrier representative.',
+      category: 'access',
+      priority: 'high',
+      status: 'resolved',
+      resolutionNote:
+        'LOA-2026-ACME-0002 issued and uploaded to the order documents. Please download from your order detail page.',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'Invoice query — March 2026',
-      description: 'Our March invoice shows charges for two circuits but we only have one active service (XCS-DEMO-0002). Could you clarify the second line item?',
-      category: 'billing', priority: 'medium', status: 'resolved',
-      resolutionNote: 'The second line item was for the temporary XCS-DEMO-0005 which was active for 12 days in March. A detailed breakdown has been emailed to alice@acme.example.com.',
+      description:
+        'Our March invoice shows charges for two circuits but we only have one active service (XCS-DEMO-0002). Could you clarify the second line item?',
+      category: 'billing',
+      priority: 'medium',
+      status: 'resolved',
+      resolutionNote:
+        'The second line item was for the temporary XCS-DEMO-0005 which was active for 12 days in March. A detailed breakdown has been emailed to alice@acme.example.com.',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'XCS-DEMO-0004 intermittent packet loss',
-      description: 'Our Equinix Fabric 1G service XCS-DEMO-0004 is showing intermittent packet loss every evening between 20:00 and 22:00 JST. Loss averages around 2–3%. Began approximately one week ago.',
-      category: 'issue', priority: 'high', status: 'in_progress',
+      description:
+        'Our Equinix Fabric 1G service XCS-DEMO-0004 is showing intermittent packet loss every evening between 20:00 and 22:00 JST. Loss averages around 2–3%. Began approximately one week ago.',
+      category: 'issue',
+      priority: 'high',
+      status: 'in_progress',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'Request to extend temporary XCS-DEMO-0005',
-      description: 'Our migration project has been delayed by approximately 45 days. Could you extend the temporary cross-connect XCS-DEMO-0005 expiry by 45 days from its current expiry date?',
-      category: 'issue', priority: 'medium', status: 'open',
+      description:
+        'Our migration project has been delayed by approximately 45 days. Could you extend the temporary cross-connect XCS-DEMO-0005 expiry by 45 days from its current expiry date?',
+      category: 'issue',
+      priority: 'medium',
+      status: 'open',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'Add secondary contact for NOC alerts',
-      description: 'Please add noc-secondary@acme.example.com as a secondary contact for all service alerting and maintenance notifications on our account.',
-      category: 'other', priority: 'low', status: 'resolved',
-      resolutionNote: 'Secondary NOC contact noc-secondary@acme.example.com added to account. Effective immediately.',
+      description:
+        'Please add noc-secondary@acme.example.com as a secondary contact for all service alerting and maintenance notifications on our account.',
+      category: 'other',
+      priority: 'low',
+      status: 'resolved',
+      resolutionNote:
+        'Secondary NOC contact noc-secondary@acme.example.com added to account. Effective immediately.',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'OTDR test documentation for XCS-DEMO-0002',
-      description: 'Could you please provide the OTDR test results for our 100G AT&T cross-connect XCS-DEMO-0002? Required for our quarterly network audit.',
-      category: 'access', priority: 'low', status: 'closed',
-      resolutionNote: 'OTDR test report attached to service XCS-DEMO-0002 documents. Reference: OTDR-2026-0042.',
+      description:
+        'Could you please provide the OTDR test results for our 100G AT&T cross-connect XCS-DEMO-0002? Required for our quarterly network audit.',
+      category: 'access',
+      priority: 'low',
+      status: 'closed',
+      resolutionNote:
+        'OTDR test report attached to service XCS-DEMO-0002 documents. Reference: OTDR-2026-0042.',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'Cancel order XCO-DEMO-001',
-      description: 'We would like to cancel order XCO-DEMO-001 (draft, AT&T 10G). We are deferring this circuit to Q3 2026.',
-      category: 'issue', priority: 'low', status: 'resolved',
+      description:
+        'We would like to cancel order XCO-DEMO-001 (draft, AT&T 10G). We are deferring this circuit to Q3 2026.',
+      category: 'issue',
+      priority: 'low',
+      status: 'resolved',
       resolutionNote: 'Order XCO-DEMO-001 cancelled as requested. No charges were incurred.',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'Scheduled maintenance notification — MMR-1',
-      description: 'We received a maintenance notification for MMR-1 on 2026-05-10 02:00–06:00 JST. Please confirm which of our services will be impacted and for how long.',
-      category: 'issue', priority: 'medium', status: 'open',
+      description:
+        'We received a maintenance notification for MMR-1 on 2026-05-10 02:00–06:00 JST. Please confirm which of our services will be impacted and for how long.',
+      category: 'issue',
+      priority: 'medium',
+      status: 'open',
     },
     {
-      portal: 'customer', orgKey: 'acme', creatorKey: 'acmeAdmin',
+      portal: 'customer',
+      orgKey: 'acme',
+      creatorKey: 'acmeAdmin',
       subject: 'Update billing address for FY2026',
-      description: 'Please update our billing address to: Acme Corporation, Finance Dept, 1-1-1 Nishi-Shinjuku, Shinjuku-ku, Tokyo 160-0023, effective 2026-04-01.',
-      category: 'billing', priority: 'low', status: 'resolved',
-      resolutionNote: 'Billing address updated in our CRM. Confirmation sent to alice@acme.example.com.',
+      description:
+        'Please update our billing address to: Acme Corporation, Finance Dept, 1-1-1 Nishi-Shinjuku, Shinjuku-ku, Tokyo 160-0023, effective 2026-04-01.',
+      category: 'billing',
+      priority: 'low',
+      status: 'resolved',
+      resolutionNote:
+        'Billing address updated in our CRM. Confirmation sent to alice@acme.example.com.',
     },
     // ── Globex Industries ──────────────────────────────────────────────────
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'XCS-DEMO-0003 AWS latency spike',
-      description: 'Our AWS Direct Connect 10G service XCS-DEMO-0003 is showing elevated latency (>25ms round-trip to us-east-1) since this morning. Normal baseline is under 5ms.',
-      category: 'issue', priority: 'critical', status: 'in_progress',
+      description:
+        'Our AWS Direct Connect 10G service XCS-DEMO-0003 is showing elevated latency (>25ms round-trip to us-east-1) since this morning. Normal baseline is under 5ms.',
+      category: 'issue',
+      priority: 'critical',
+      status: 'in_progress',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Request new cross-connect — Equinix Fabric',
-      description: 'We would like to place an order for a new 10G Equinix Fabric cross-connect in MMR-1. Please advise on port availability and current lead time.',
-      category: 'suggestion', priority: 'medium', status: 'open',
+      description:
+        'We would like to place an order for a new 10G Equinix Fabric cross-connect in MMR-1. Please advise on port availability and current lead time.',
+      category: 'suggestion',
+      priority: 'medium',
+      status: 'open',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'LOA for XCS-DEMO-0003',
-      description: 'Please provide the Letter of Authorization for our AWS Direct Connect service XCS-DEMO-0003. We need it for our AWS account team.',
-      category: 'access', priority: 'high', status: 'resolved',
+      description:
+        'Please provide the Letter of Authorization for our AWS Direct Connect service XCS-DEMO-0003. We need it for our AWS account team.',
+      category: 'access',
+      priority: 'high',
+      status: 'resolved',
       resolutionNote: 'LOA-2026-GLOBEX-0003 uploaded to order XCO-DEMO-008 documents section.',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Billing contact update',
-      description: 'Please update the billing contact for our account from finance@globex.example.com to billing@globex.example.com and copy cfo@globex.example.com on all invoices.',
-      category: 'billing', priority: 'low', status: 'resolved',
-      resolutionNote: 'Billing contact updated. New invoice copies will be sent to billing@globex.example.com and cfo@globex.example.com from next cycle.',
+      description:
+        'Please update the billing contact for our account from finance@globex.example.com to billing@globex.example.com and copy cfo@globex.example.com on all invoices.',
+      category: 'billing',
+      priority: 'low',
+      status: 'resolved',
+      resolutionNote:
+        'Billing contact updated. New invoice copies will be sent to billing@globex.example.com and cfo@globex.example.com from next cycle.',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Order XCO-DEMO-003 — feasibility timeline',
-      description: 'Order XCO-DEMO-003 has been under review for 5 days. Could you please provide an update on the feasibility assessment and expected approval timeline?',
-      category: 'issue', priority: 'medium', status: 'closed',
+      description:
+        'Order XCO-DEMO-003 has been under review for 5 days. Could you please provide an update on the feasibility assessment and expected approval timeline?',
+      category: 'issue',
+      priority: 'medium',
+      status: 'closed',
       resolutionNote: 'Order XCO-DEMO-003 feasibility approved. Awaiting final documentation.',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Disconnection request for order XCO-DEMO-005',
-      description: 'We would like to formally request disconnection of the rejected order XCO-DEMO-005 from our account history. Please archive it or confirm it requires no further action.',
-      category: 'other', priority: 'low', status: 'closed',
-      resolutionNote: 'Rejected order XCO-DEMO-005 is already archived. No further action required from your end.',
+      description:
+        'We would like to formally request disconnection of the rejected order XCO-DEMO-005 from our account history. Please archive it or confirm it requires no further action.',
+      category: 'other',
+      priority: 'low',
+      status: 'closed',
+      resolutionNote:
+        'Rejected order XCO-DEMO-005 is already archived. No further action required from your end.',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Physical access request — Suite 7 CAGE-7B',
-      description: 'We would like to schedule a site visit for our network engineer to inspect the cabling in CAGE-7B, Rack 7B-01 on 2026-05-03. Please confirm the access procedure and required lead time.',
-      category: 'access', priority: 'medium', status: 'open',
+      description:
+        'We would like to schedule a site visit for our network engineer to inspect the cabling in CAGE-7B, Rack 7B-01 on 2026-05-03. Please confirm the access procedure and required lead time.',
+      category: 'access',
+      priority: 'medium',
+      status: 'open',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Request OTDR documentation for XCS-DEMO-0003',
-      description: 'Please provide OTDR test results for our AWS Direct Connect service XCS-DEMO-0003 for our internal ISO 27001 audit documentation.',
-      category: 'access', priority: 'low', status: 'open',
+      description:
+        'Please provide OTDR test results for our AWS Direct Connect service XCS-DEMO-0003 for our internal ISO 27001 audit documentation.',
+      category: 'access',
+      priority: 'low',
+      status: 'open',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'Invoice discrepancy — February 2026',
-      description: 'Our February invoice includes a one-time NRC charge of $500 that we do not recognise. Order XCO-DEMO-008 NRC was agreed at $300. Please clarify.',
-      category: 'billing', priority: 'medium', status: 'resolved',
-      resolutionNote: 'The additional $200 was an expedite fee agreed verbally during installation. A signed amendment has been emailed for your records. Credit note issued if not agreed.',
+      description:
+        'Our February invoice includes a one-time NRC charge of $500 that we do not recognise. Order XCO-DEMO-008 NRC was agreed at $300. Please clarify.',
+      category: 'billing',
+      priority: 'medium',
+      status: 'resolved',
+      resolutionNote:
+        'The additional $200 was an expedite fee agreed verbally during installation. A signed amendment has been emailed for your records. Credit note issued if not agreed.',
     },
     {
-      portal: 'customer', orgKey: 'globex', creatorKey: 'globexAdmin',
+      portal: 'customer',
+      orgKey: 'globex',
+      creatorKey: 'globexAdmin',
       subject: 'XCS-DEMO-0003 scheduled downtime — confirm impact',
-      description: 'We are planning a maintenance window on our AWS workloads on 2026-05-17 from 01:00–03:00 JST. Will bringing down XCS-DEMO-0003 during that window affect any monitoring or billing?',
-      category: 'other', priority: 'low', status: 'resolved',
-      resolutionNote: 'Planned downtime during a maintenance window does not affect billing. MRC continues regardless of port activity. No billing impact.',
+      description:
+        'We are planning a maintenance window on our AWS workloads on 2026-05-17 from 01:00–03:00 JST. Will bringing down XCS-DEMO-0003 during that window affect any monitoring or billing?',
+      category: 'other',
+      priority: 'low',
+      status: 'resolved',
+      resolutionNote:
+        'Planned downtime during a maintenance window does not affect billing. MRC continues regardless of port activity. No billing impact.',
     },
   ];
 
@@ -2888,7 +3002,9 @@ async function main() {
       cuTicketCount++;
     }
   }
-  console.log(`  ✓ ${cuTicketCount} new Customer SupportTicket records seeded (${customerTicketSeeds.length} templates)`);
+  console.log(
+    `  ✓ ${cuTicketCount} new Customer SupportTicket records seeded (${customerTicketSeeds.length} templates)`,
+  );
 
   // ── BillingTriggerEvents for all demo services ────────────────────────────
 
@@ -2912,8 +3028,8 @@ async function main() {
         {
           eventType: 'service_activated',
           occurredAt: new Date(Date.now() - 7 * 86400_000),
-          mrcCents: 45000,   // ¥450/month
-          nrcCents: 50000,   // ¥500 install
+          mrcCents: 45000, // ¥450/month
+          nrcCents: 50000, // ¥500 install
           exportedAt: new Date(Date.now() - 6 * 86400_000),
           metadata: { serviceNumber: 'XCS-DEMO-0001', note: 'Acme–Globex 1G c2c' },
         },
@@ -2926,8 +3042,8 @@ async function main() {
         {
           eventType: 'service_activated',
           occurredAt: new Date(Date.now() - 50 * 86400_000),
-          mrcCents: 450000,  // ¥4,500/month  100G
-          nrcCents: 500000,  // ¥5,000 install
+          mrcCents: 450000, // ¥4,500/month  100G
+          nrcCents: 500000, // ¥5,000 install
           exportedAt: new Date(Date.now() - 49 * 86400_000),
           metadata: { serviceNumber: 'XCS-DEMO-0002', note: 'Acme–AT&T 100G' },
         },
@@ -2936,7 +3052,7 @@ async function main() {
           eventType: 'reroute_completed',
           occurredAt: new Date(Date.now() - 20 * 86400_000),
           mrcCents: 450000,
-          nrcCents: 30000,   // reroute NRC
+          nrcCents: 30000, // reroute NRC
           exportedAt: new Date(Date.now() - 19 * 86400_000),
           metadata: { serviceNumber: 'XCS-DEMO-0002', note: 'Emergency reroute via ODF-07' },
         },
@@ -2957,7 +3073,7 @@ async function main() {
         {
           eventType: 'service_activated',
           occurredAt: new Date(Date.now() - 35 * 86400_000),
-          mrcCents: 280000,  // ¥2,800/month  10G AWS
+          mrcCents: 280000, // ¥2,800/month  10G AWS
           nrcCents: 300000,
           exportedAt: new Date(Date.now() - 34 * 86400_000),
           metadata: { serviceNumber: 'XCS-DEMO-0003', note: 'Globex–AWS DX 10G' },
@@ -2979,7 +3095,7 @@ async function main() {
         {
           eventType: 'service_activated',
           occurredAt: new Date(Date.now() - 20 * 86400_000),
-          mrcCents: 32000,   // ¥320/month  1G Equinix
+          mrcCents: 32000, // ¥320/month  1G Equinix
           nrcCents: 20000,
           exportedAt: new Date(Date.now() - 19 * 86400_000),
           metadata: { serviceNumber: 'XCS-DEMO-0004', note: 'Acme–Equinix 1G' },
@@ -2993,7 +3109,7 @@ async function main() {
         {
           eventType: 'service_activated',
           occurredAt: new Date(Date.now() - 10 * 86400_000),
-          mrcCents: 60000,   // ¥600/month  10G temporary
+          mrcCents: 60000, // ¥600/month  10G temporary
           nrcCents: 15000,
           exportedAt: new Date(Date.now() - 9 * 86400_000),
           metadata: { serviceNumber: 'XCS-DEMO-0005', note: 'Acme–Globex temp 10G' },
@@ -3010,8 +3126,11 @@ async function main() {
           eventType: 'temporary_extended',
           occurredAt: new Date(Date.now() - 1 * 86400_000),
           mrcCents: 60000,
-          nrcCents: 5000,   // extension fee
-          metadata: { serviceNumber: 'XCS-DEMO-0005', note: 'Extended 45 days per customer request' },
+          nrcCents: 5000, // extension fee
+          metadata: {
+            serviceNumber: 'XCS-DEMO-0005',
+            note: 'Extended 45 days per customer request',
+          },
         },
       ],
     },

@@ -17,7 +17,9 @@ export function CustomerAddCommentForm({ ticketId }: { ticketId: string }) {
     setLoading(true);
     setError('');
     try {
-      await customerSupportApi.addComment(token, ticketId, { body: formData.get('body') as string });
+      await customerSupportApi.addComment(token, ticketId, {
+        body: formData.get('body') as string,
+      });
       if (ref.current) ref.current.value = '';
       router.refresh();
     } catch (e: any) {

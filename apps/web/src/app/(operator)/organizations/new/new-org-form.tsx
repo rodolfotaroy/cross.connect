@@ -68,11 +68,12 @@ export function NewOrgForm() {
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
           >
             <option value="">Select type...</option>
-            <option value="customer">Customer</option>
+            <option value="customer">Customer (Cross Connect)</option>
             <option value="carrier">Carrier</option>
             <option value="cloud_provider">Cloud Provider</option>
             <option value="exchange">Exchange</option>
             <option value="operator">Operator</option>
+            <option value="service_partner">Service Partner (SP)</option>
           </select>
         </div>
       </div>

@@ -26,7 +26,10 @@ export default function NewCustomerTicketPage() {
           Back to Tickets
         </Link>
       </div>
-      <PageHeader title="New Support Ticket" subtitle="Describe your issue and we will get back to you" />
+      <PageHeader
+        title="New Support Ticket"
+        subtitle="Describe your issue and we will get back to you"
+      />
       <NewCustomerTicketForm />
     </div>
   );

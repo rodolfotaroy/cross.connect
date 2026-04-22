@@ -21,13 +21,18 @@ export class SupportService {
     query: ListSupportTicketsInput,
     portalFilter?: 'sp' | 'op' | 'customer',
   ) {
-    const { page, limit, sortBy, sortDir, status, category } = query;
+    const { page, limit, sortBy, sortDir, status, category, q } = query;
     const where: Record<string, unknown> = {};
     // Operator/admin roles see all orgs; SP/customer roles are scoped to their own org.
     if (!OPERATOR_ROLES.has(user.role) && user.orgId) where['organizationId'] = user.orgId;
     if (status) where['status'] = status;
     if (category) where['category'] = category;
     if (portalFilter) where['portal'] = portalFilter;
+    if (q)
+      where['OR'] = [
+        { ticketNumber: { contains: q, mode: 'insensitive' } },
+        { subject: { contains: q, mode: 'insensitive' } },
+      ];
 
     const orderBy = { [sortBy ?? 'createdAt']: sortDir ?? 'desc' };
     const skip = (page - 1) * limit;

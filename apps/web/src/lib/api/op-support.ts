@@ -48,6 +48,9 @@ export const opSupportApi = {
     if (params?.limit) qs.set('limit', String(params.limit));
     if (params?.status) qs.set('status', params.status);
     if (params?.category) qs.set('category', params.category);
+    if (params?.q) qs.set('q', params.q);
+    if (params?.sortBy) qs.set('sortBy', params.sortBy);
+    if (params?.sortDir) qs.set('sortDir', params.sortDir);
     const q = qs.toString();
     return apiClient.get<{ data: SupportTicketDto[]; meta: any }>(
       `/op/support/tickets${q ? `?${q}` : ''}`,

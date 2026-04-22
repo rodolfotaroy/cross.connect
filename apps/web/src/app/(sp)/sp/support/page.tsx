@@ -20,10 +20,33 @@ const PRIORITY_COLOR: Record<string, string> = {
   critical: 'bg-red-100 text-red-700',
 };
 
+const SORTABLE_COLS = [
+  { key: 'ticketNumber', label: '#' },
+  { key: 'subject', label: 'Subject' },
+  { key: 'category', label: 'Category' },
+  { key: 'priority', label: 'Priority' },
+  { key: 'status', label: 'Status' },
+  { key: 'createdAt', label: 'Created' },
+] as const;
+
+function sortLink(
+  col: string,
+  current: { sortBy?: string; sortDir?: string; status?: string; q?: string },
+) {
+  const isActive = current.sortBy === col;
+  const nextDir = isActive && current.sortDir === 'asc' ? 'desc' : 'asc';
+  const params = new URLSearchParams();
+  params.set('sortBy', col);
+  params.set('sortDir', nextDir);
+  if (current.status) params.set('status', current.status);
+  if (current.q) params.set('q', current.q);
+  return { href: `?${params.toString()}`, dir: isActive ? current.sortDir : undefined };
+}
+
 export default async function SpSupportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; q?: string; sortBy?: string; sortDir?: string }>;
 }) {
   const sp = await searchParams;
   const session = await auth();
@@ -36,7 +59,14 @@ export default async function SpSupportPage({
   const [contact, result] = await Promise.all([
     spSupportApi.getContact(token).catch(() => null),
     spSupportApi
-      .listTickets(token, { status: sp.status as any, page, limit: 25 })
+      .listTickets(token, {
+        status: sp.status as any,
+        page,
+        limit: 25,
+        q: sp.q,
+        sortBy: sp.sortBy,
+        sortDir: sp.sortDir as any,
+      })
       .catch(() => ({ data: [], meta: { page: 1, limit: 25, total: 0, totalPages: 0 } })),
   ]);
 
@@ -79,6 +109,12 @@ export default async function SpSupportPage({
 
       {/* Filter */}
       <form method="GET" className="flex flex-wrap gap-3">
+        <input
+          name="q"
+          defaultValue={sp.q}
+          placeholder="Search ticket # or subject…"
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        />
         <select
           name="status"
           defaultValue={sp.status ?? ''}
@@ -96,6 +132,12 @@ export default async function SpSupportPage({
         >
           Filter
         </button>
+        <a
+          href="/sp/support"
+          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+        >
+          Clear
+        </a>
       </form>
 
       {/* Ticket list */}
@@ -109,15 +151,23 @@ export default async function SpSupportPage({
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {['#', 'Subject', 'Category', 'Priority', 'Status', 'Created'].map((h) => (
-                    <th
-                      key={h}
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {SORTABLE_COLS.map(({ key, label }) => {
+                    const { href, dir } = sortLink(key, sp);
+                    return (
+                      <th
+                        key={key}
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                      >
+                        <Link href={href} className="group inline-flex items-center gap-1 hover:text-gray-900">
+                          {label}
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                            {dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '⇅'}
+                          </span>
+                        </Link>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">

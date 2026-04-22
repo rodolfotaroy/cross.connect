@@ -54,9 +54,7 @@ export default async function CustomerTicketDetailPage({
         title={ticket.subject}
         subtitle={`${ticket.category} · ${ticket.priority} priority`}
         actions={
-          isAdmin && (
-            <CustomerUpdateStatusForm ticketId={id} currentStatus={ticket.status} />
-          )
+          isAdmin && <CustomerUpdateStatusForm ticketId={id} currentStatus={ticket.status} />
         }
       />
 
@@ -102,9 +100,7 @@ export default async function CustomerTicketDetailPage({
               <div key={c.id} className="rounded-md bg-gray-50 p-4">
                 <div className="mb-1 flex items-center gap-2 text-xs text-gray-400">
                   <span className="font-medium text-gray-600">
-                    {c.author
-                      ? `${c.author.firstName} ${c.author.lastName}`
-                      : 'Unknown'}
+                    {c.author ? `${c.author.firstName} ${c.author.lastName}` : 'Unknown'}
                   </span>
                   <span>·</span>
                   <span>{new Date(c.createdAt).toLocaleString()}</span>

@@ -54,6 +54,9 @@ export const customerSupportApi = {
     if (params?.limit) qs.set('limit', String(params.limit));
     if (params?.status) qs.set('status', params.status);
     if (params?.category) qs.set('category', params.category);
+    if (params?.q) qs.set('q', params.q);
+    if (params?.sortBy) qs.set('sortBy', params.sortBy);
+    if (params?.sortDir) qs.set('sortDir', params.sortDir);
     const q = qs.toString();
     return apiClient.get<{ data: CustomerSupportTicketDto[]; meta: any }>(
       `/portal/support/tickets${q ? `?${q}` : ''}`,
@@ -78,10 +81,6 @@ export const customerSupportApi = {
   },
 
   addComment(token: string, id: string, dto: CreateTicketCommentInput) {
-    return apiClient.post<TicketCommentDto>(
-      `/portal/support/tickets/${id}/comments`,
-      dto,
-      token,
-    );
+    return apiClient.post<TicketCommentDto>(`/portal/support/tickets/${id}/comments`, dto, token);
   },
 };

@@ -58,6 +58,7 @@ export default async function OrganizationsPage({
           <option value="operator">Operator</option>
           <option value="cloud_provider">Cloud Provider</option>
           <option value="exchange">Exchange</option>
+          <option value="service_partner">Service Partner (SP)</option>
         </select>
         <button
           type="submit"
