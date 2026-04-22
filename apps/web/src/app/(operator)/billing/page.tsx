@@ -18,9 +18,10 @@ export default async function BillingEventsPage() {
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
 
-  const events = await billingEventsApi
+  const result = await billingEventsApi
     .listPending(token)
-    .catch(() => [] as BillingTriggerEventDto[]);
+    .catch(() => ({ data: [] as BillingTriggerEventDto[], nextCursor: null }));
+  const events = result.data;
 
   return (
     <div className="space-y-6">

@@ -27,7 +27,7 @@ import {
 @ApiTags('sp/cross-connects')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('sp_admin', 'sp_ops', 'sp_viewer', 'sp_report')
+@Roles('super_admin', 'sp_admin', 'sp_ops', 'sp_viewer', 'sp_report')
 @Controller('sp/cross-connects')
 export class DedicatedXcController {
   constructor(private readonly svc: DedicatedXcService) {}
@@ -48,7 +48,7 @@ export class DedicatedXcController {
   }
 
   @Post()
-  @Roles('sp_admin', 'sp_ops')
+  @Roles('super_admin', 'sp_admin', 'sp_ops')
   @ApiOperation({ summary: 'Create a new dedicated cross connect' })
   create(
     @Body(new ZodValidationPipe(CreateDedicatedXcDto)) dto: CreateDedicatedXcDto,
@@ -58,7 +58,7 @@ export class DedicatedXcController {
   }
 
   @Patch(':id')
-  @Roles('sp_admin', 'sp_ops')
+  @Roles('super_admin', 'sp_admin', 'sp_ops')
   @ApiOperation({ summary: 'Update a dedicated cross connect (sp_ops: draft + own only)' })
   update(
     @Param('id') id: string,
@@ -69,14 +69,14 @@ export class DedicatedXcController {
   }
 
   @Delete(':id')
-  @Roles('sp_admin', 'sp_ops')
+  @Roles('super_admin', 'sp_admin', 'sp_ops')
   @ApiOperation({ summary: 'Soft-delete a cross connect (sp_ops: draft + own only)' })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.svc.remove(id, user);
   }
 
   @Post(':id/hops')
-  @Roles('sp_admin', 'sp_ops')
+  @Roles('super_admin', 'sp_admin', 'sp_ops')
   @ApiOperation({ summary: 'Add a hop to a cross connect' })
   addHop(
     @Param('id') id: string,
@@ -87,7 +87,7 @@ export class DedicatedXcController {
   }
 
   @Delete(':id/hops/:hopId')
-  @Roles('sp_admin', 'sp_ops')
+  @Roles('super_admin', 'sp_admin', 'sp_ops')
   @ApiOperation({ summary: 'Remove a hop and renumber remaining hops' })
   removeHop(
     @Param('id') id: string,

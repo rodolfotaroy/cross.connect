@@ -17,7 +17,7 @@ import { SupportService } from './support.service';
 @ApiTags('sp/support')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('sp_admin', 'sp_ops', 'sp_viewer', 'sp_report')
+@Roles('super_admin', 'sp_admin', 'sp_ops', 'sp_viewer', 'sp_report')
 @Controller('sp/support')
 export class SupportController {
   constructor(private readonly svc: SupportService) {}
@@ -55,7 +55,7 @@ export class SupportController {
   }
 
   @Patch('tickets/:id/status')
-  @Roles('sp_admin')
+  @Roles('super_admin', 'sp_admin')
   @ApiOperation({ summary: 'Update ticket status (sp_admin only)' })
   updateStatus(
     @Param('id') id: string,

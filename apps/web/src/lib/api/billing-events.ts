@@ -11,8 +11,13 @@ export interface BillingTriggerEventDto {
   nrcCents: number | null;
 }
 
+export interface BillingEventPage {
+  data: BillingTriggerEventDto[];
+  nextCursor: string | null;
+}
+
 export const billingEventsApi = {
   listPending(token: string) {
-    return apiClient.get<BillingTriggerEventDto[]>('/billing-events/pending', token);
+    return apiClient.get<BillingEventPage>('/billing-events/pending', token);
   },
 };

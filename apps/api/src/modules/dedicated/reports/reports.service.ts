@@ -7,8 +7,9 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service';
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSummary(orgId: string) {
-    const where = { organizationId: orgId, deletedAt: null } as const;
+  async getSummary(orgId: string | null | undefined) {
+    const where: Record<string, unknown> = { deletedAt: null };
+    if (orgId) where['organizationId'] = orgId;
 
     const [total, byStatus, financials] = await Promise.all([
       this.prisma.dedicatedCrossConnect.count({ where }),
@@ -26,7 +27,7 @@ export class ReportsService {
 
     const byQuarter = await this.prisma.dedicatedCrossConnect.groupBy({
       by: ['year', 'quarter'],
-      where: { ...where, year: { not: null }, quarter: { not: null } },
+      where: { ...(orgId ? { organizationId: orgId } : {}), year: { not: null }, quarter: { not: null }, deletedAt: null },
       _count: { id: true },
       _sum: { mrc: true, nrc: true },
       orderBy: [{ year: 'desc' }, { quarter: 'desc' }],
@@ -47,7 +48,7 @@ export class ReportsService {
     };
   }
 
-  async listForReport(orgId: string, query: ListReportsInput) {
+  async listForReport(orgId: string | null | undefined, query: ListReportsInput) {
     const {
       page,
       limit,
@@ -62,7 +63,8 @@ export class ReportsService {
       customerType,
     } = query;
 
-    const where: Record<string, unknown> = { organizationId: orgId, deletedAt: null };
+    const where: Record<string, unknown> = { deletedAt: null };
+    if (orgId) where['organizationId'] = orgId;
     if (year) where['year'] = year;
     if (quarter) where['quarter'] = quarter;
     if (status) where['status'] = status;
@@ -96,7 +98,7 @@ export class ReportsService {
     return { data, meta: buildPaginatedMeta(total, page, limit) };
   }
 
-  async exportCsv(orgId: string, query: ListReportsInput): Promise<string> {
+  async exportCsv(orgId: string | null | undefined, query: ListReportsInput): Promise<string> {
     // Fetch all matching records (no pagination for export)
     const { data } = await this.listForReport(orgId, {
       ...query,

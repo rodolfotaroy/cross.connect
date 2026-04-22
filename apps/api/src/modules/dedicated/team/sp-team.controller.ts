@@ -12,7 +12,7 @@ import { SpTeamService } from './sp-team.service';
 @ApiTags('sp/team')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('sp_admin')
+@Roles('super_admin', 'sp_admin')
 @Controller('sp/team')
 export class SpTeamController {
   constructor(private readonly svc: SpTeamService) {}

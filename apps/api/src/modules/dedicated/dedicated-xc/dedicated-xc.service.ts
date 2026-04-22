@@ -27,7 +27,7 @@ const VALID_TRANSITIONS: Record<DedicatedXcStatus, DedicatedXcStatus[]> = {
 };
 
 // Roles that can access dedicated XC features
-const SP_ROLES = new Set(['sp_admin', 'sp_ops', 'sp_viewer', 'sp_report']);
+const SP_ROLES = new Set(['super_admin', 'sp_admin', 'sp_ops', 'sp_viewer', 'sp_report']);
 
 @Injectable()
 export class DedicatedXcService {
@@ -59,10 +59,9 @@ export class DedicatedXcService {
 
   async list(user: AuthenticatedUser, query: ListDedicatedXcDto) {
     const { page, limit, sortBy, sortDir, status, q, year, quarter } = query;
-    const where: Record<string, unknown> = {
-      organizationId: user.orgId,
-      deletedAt: null,
-    };
+    const where: Record<string, unknown> = { deletedAt: null };
+    // super_admin sees all orgs; SP roles see only their own org
+    if (user.orgId) where['organizationId'] = user.orgId;
     if (status) where['status'] = status;
     if (year) where['year'] = year;
     if (quarter) where['quarter'] = quarter;
@@ -95,7 +94,7 @@ export class DedicatedXcService {
 
   async getOne(id: string, user: AuthenticatedUser) {
     const record = await this.prisma.dedicatedCrossConnect.findFirst({
-      where: { id, organizationId: user.orgId, deletedAt: null },
+      where: { id, ...(user.orgId ? { organizationId: user.orgId } : {}), deletedAt: null },
       include: {
         hops: { orderBy: { hopNumber: 'asc' } },
         site: { select: { id: true, name: true, code: true } },
@@ -107,6 +106,9 @@ export class DedicatedXcService {
   }
 
   async create(dto: CreateDedicatedXcDto, user: AuthenticatedUser) {
+    if (!user.orgId) {
+      throw new BadRequestException('super_admin must specify an organizationId to create records');
+    }
     const org = await this.prisma.organization.findUniqueOrThrow({
       where: { id: user.orgId },
       select: { code: true },

@@ -13,7 +13,7 @@ import { ReportsService } from './reports.service';
 @ApiTags('sp/reports')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('sp_admin', 'sp_report')
+@Roles('super_admin', 'sp_admin', 'sp_report')
 @Controller('sp/reports')
 export class ReportsController {
   constructor(private readonly svc: ReportsService) {}

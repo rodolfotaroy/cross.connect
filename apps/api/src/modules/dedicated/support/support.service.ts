@@ -15,7 +15,9 @@ export class SupportService {
 
   async listTickets(user: AuthenticatedUser, query: ListSupportTicketsInput) {
     const { page, limit, sortBy, sortDir, status, category } = query;
-    const where: Record<string, unknown> = { organizationId: user.orgId };
+    const where: Record<string, unknown> = {};
+    // super_admin sees all orgs' tickets; SP roles see only their own org
+    if (user.orgId) where['organizationId'] = user.orgId;
     if (status) where['status'] = status;
     if (category) where['category'] = category;
 
@@ -40,7 +42,7 @@ export class SupportService {
 
   async getTicket(ticketId: string, user: AuthenticatedUser) {
     const ticket = await this.prisma.supportTicket.findFirst({
-      where: { id: ticketId, organizationId: user.orgId },
+      where: { id: ticketId, ...(user.orgId ? { organizationId: user.orgId } : {}) },
       include: {
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
         resolvedBy: { select: { id: true, firstName: true, lastName: true } },
@@ -77,12 +79,12 @@ export class SupportService {
     dto: UpdateTicketStatusInput,
     user: AuthenticatedUser,
   ) {
-    // Only sp_admin can change ticket status
-    if (user.role !== 'sp_admin') {
+    // Only sp_admin or super_admin can change ticket status
+    if (user.role !== 'sp_admin' && user.role !== 'super_admin') {
       throw new ForbiddenException('Only sp_admin can update ticket status');
     }
     const ticket = await this.prisma.supportTicket.findFirst({
-      where: { id: ticketId, organizationId: user.orgId },
+      where: { id: ticketId, ...(user.orgId ? { organizationId: user.orgId } : {}) },
     });
     if (!ticket) throw new NotFoundException('Ticket not found');
 
@@ -105,7 +107,7 @@ export class SupportService {
 
   async addComment(ticketId: string, dto: CreateTicketCommentInput, user: AuthenticatedUser) {
     const ticket = await this.prisma.supportTicket.findFirst({
-      where: { id: ticketId, organizationId: user.orgId },
+      where: { id: ticketId, ...(user.orgId ? { organizationId: user.orgId } : {}) },
     });
     if (!ticket) throw new NotFoundException('Ticket not found');
 
