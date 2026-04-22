@@ -104,7 +104,15 @@ export function CollapsibleSidebar({ title, subtitle, navItems, userLine1, userL
         {navItems.map((item) => {
           const Icon = NAV_ICONS[item.label];
           const iconOnly = !isMobile && collapsed;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const isActive =
+            pathname === item.href ||
+            (pathname.startsWith(item.href + '/') &&
+              !navItems.some(
+                (other) =>
+                  other.href !== item.href &&
+                  other.href.startsWith(item.href) &&
+                  pathname.startsWith(other.href),
+              ));
           return (
             <Link
               key={item.href}
@@ -143,7 +151,10 @@ export function CollapsibleSidebar({ title, subtitle, navItems, userLine1, userL
           type="button"
           title="Sign out"
           aria-label="Sign out"
-          onClick={async () => { await signOut({ redirect: false }); window.location.replace('/login'); }}
+          onClick={async () => {
+            await signOut({ redirect: false });
+            window.location.replace('/login');
+          }}
           className={`flex items-center gap-2 text-gray-400 hover:text-gray-100 transition-colors ${
             !isMobile && collapsed ? '' : 'mt-2'
           }`}
