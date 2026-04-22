@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth/session';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata: Metadata = { title: 'Reports â€” SP Portal' };
+export const metadata: Metadata = { title: 'Reports — SP Portal' };
 
 export default async function SpReportsPage({
   searchParams,
@@ -275,31 +275,31 @@ export default async function SpReportsPage({
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.circuitId ?? 'â€”'}
+                      {xc.circuitId ?? '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <DedicatedXcStatusBadge status={xc.status} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.orderingCompany ?? 'â€”'}
+                      {xc.orderingCompany ?? '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.bandwidth ?? 'â€”'}
+                      {xc.bandwidth ?? '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : 'â€”'}
+                      {xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : 'â€”'}
+                      {xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.billableDate ? new Date(xc.billableDate).toLocaleDateString() : 'â€”'}
+                      {xc.billableDate ? new Date(xc.billableDate).toLocaleDateString() : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.year ? `${xc.year} Q${xc.quarter ?? 'â€”'}` : 'â€”'}
+                      {xc.year ? `${xc.year} Q${xc.quarter ?? '—'}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.dateCompleted ? new Date(xc.dateCompleted).toLocaleDateString() : 'â€”'}
+                      {xc.dateCompleted ? new Date(xc.dateCompleted).toLocaleDateString() : '—'}
                     </td>
                   </tr>
                 ))}
