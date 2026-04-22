@@ -86,9 +86,9 @@ export default async function SpReportsPage({
       {summary && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <SummaryCard label="Total Records" value={result.meta.total} />
-          <SummaryCard label="Total MRC" value={`$${totalMrc.toFixed(2)}`} />
-          <SummaryCard label="Total NRC" value={`$${totalNrc.toFixed(2)}`} />
-          <SummaryCard label="Annual Recurring Revenue" value={`$${arr.toFixed(2)}`} />
+          <SummaryCard label="Total MRC" value={`¥${Math.round(totalMrc).toLocaleString()}`} />
+          <SummaryCard label="Total NRC" value={`¥${Math.round(totalNrc).toLocaleString()}`} />
+          <SummaryCard label="Annual Recurring Revenue" value={`¥${Math.round(arr).toLocaleString()}`} />
         </div>
       )}
 
@@ -135,8 +135,8 @@ export default async function SpReportsPage({
                         {q.year} Q{q.quarter}
                       </td>
                       <td className="py-1.5 text-right">{q.count}</td>
-                      <td className="py-1.5 text-right">${Number(q.totalMrc).toFixed(2)}</td>
-                      <td className="py-1.5 text-right">${Number(q.totalNrc).toFixed(2)}</td>
+                      <td className="py-1.5 text-right">¥{Math.round(Number(q.totalMrc)).toLocaleString()}</td>
+                      <td className="py-1.5 text-right">¥{Math.round(Number(q.totalNrc)).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -287,10 +287,10 @@ export default async function SpReportsPage({
                       {xc.bandwidth ?? '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : '—'}
+                      {xc.mrc ? `¥${Math.round(Number(xc.mrc)).toLocaleString()}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : '—'}
+                      {xc.nrc ? `¥${Math.round(Number(xc.nrc)).toLocaleString()}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
                       {xc.billableDate ? new Date(xc.billableDate).toLocaleDateString() : '—'}

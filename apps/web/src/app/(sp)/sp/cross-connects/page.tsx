@@ -130,10 +130,10 @@ export default async function SpCrossConnectsPage({
                       {xc.site?.name ?? '—'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-3 text-gray-600">
-                      {xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : '—'}
+                      {xc.mrc ? `¥${Math.round(Number(xc.mrc)).toLocaleString()}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-3 text-gray-600">
-                      {xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : '—'}
+                      {xc.nrc ? `¥${Math.round(Number(xc.nrc)).toLocaleString()}` : '—'}
                     </td>
                     <td className="whitespace-nowrap px-6 py-3 text-gray-600">
                       {xc.dateCompleted ? new Date(xc.dateCompleted).toLocaleDateString() : '—'}

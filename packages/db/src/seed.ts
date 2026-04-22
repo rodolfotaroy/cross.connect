@@ -1297,7 +1297,49 @@ async function main() {
       });
     }
   }
-  console.log('  ? 8 DedicatedCrossConnect records');
+  console.log('  ✓ 8 DedicatedCrossConnect records');
+
+  // ── Bulk 500 SP cross-connects (load test data) ──────────────────────────
+  const bulkStatuses = ['draft', 'submitted', 'in_progress', 'completed', 'disconnected', 'cancelled'] as const;
+  const bulkCompanies = [
+    'NTT Communications', 'SoftBank', 'KDDI', 'Internet Initiative Japan',
+    'Equinix Japan', 'Digital Realty Tokyo', 'Nexcenter', 'Colt Technology Japan',
+    'Zayo Japan', 'NEC Networks', 'Fujitsu Network', 'Tata Communications JP',
+    'PCCW Global JP', 'Telstra Japan', 'BT Japan',
+  ];
+  const bulkCustomerTypes = ['enterprise', 'carrier', 'cloud'];
+  const bulkCableTypes = ['SMF', 'MMF'];
+
+  const bulkXcs: Prisma.DedicatedCrossConnectCreateManyInput[] = [];
+  for (let i = 0; i < 500; i++) {
+    const status = bulkStatuses[i % bulkStatuses.length];
+    const year = 2022 + (i % 4);
+    const quarter = (i % 4) + 1;
+    const hasMrc = status !== 'draft';
+    const mrc = hasMrc ? 50000 + (i % 20) * 25000 : null;
+    const nrc = hasMrc ? 100000 + (i % 15) * 50000 : null;
+    const isComplete = status === 'completed' || status === 'disconnected';
+    const month = String(Math.min(quarter * 3, 12)).padStart(2, '0');
+    bulkXcs.push({
+      crossConnectId: `SP-BULK-XC-${String(i + 1).padStart(4, '0')}`,
+      organizationId: spOrg.id,
+      createdById: spAdminUser.id,
+      status: status as any,
+      orderingCompany: bulkCompanies[i % bulkCompanies.length],
+      circuitId: `CKT-BULK-${1000 + i}`,
+      cableType: bulkCableTypes[i % bulkCableTypes.length],
+      customerType: bulkCustomerTypes[i % bulkCustomerTypes.length],
+      mrc: mrc ? new Prisma.Decimal(mrc) : null,
+      nrc: nrc ? new Prisma.Decimal(nrc) : null,
+      year,
+      quarter,
+      siteId: spDemoSite?.id ?? null,
+      dateCompleted: isComplete ? new Date(`${year}-${month}-15`) : null,
+      disconnectionDate: status === 'disconnected' ? new Date(`${year}-${month}-28`) : null,
+    });
+  }
+  await prisma.dedicatedCrossConnect.createMany({ data: bulkXcs, skipDuplicates: true });
+  console.log('  ✓ 500 bulk DedicatedCrossConnect records (load test)');
 
   // Support tickets
   const ticketData = [

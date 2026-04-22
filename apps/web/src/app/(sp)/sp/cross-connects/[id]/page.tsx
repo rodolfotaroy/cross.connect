@@ -56,10 +56,10 @@ export default async function XcDetailPage({ params }: { params: Promise<{ id: s
           <Detail label="Cable Type" value={xc.cableType} />
           <Detail label="Customer Type" value={xc.customerType} />
           {canReport && (
-            <Detail label="MRC" value={xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : undefined} />
+            <Detail label="MRC" value={xc.mrc ? `¥${Math.round(Number(xc.mrc)).toLocaleString()}` : undefined} />
           )}
           {canReport && (
-            <Detail label="NRC" value={xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : undefined} />
+            <Detail label="NRC" value={xc.nrc ? `¥${Math.round(Number(xc.nrc)).toLocaleString()}` : undefined} />
           )}
           <Detail
             label="Date Completed"
