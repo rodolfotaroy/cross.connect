@@ -101,10 +101,14 @@ export default async function BillingEventsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-600">
-                      {ev.mrcCents != null ? `¥${Math.round(ev.mrcCents / 100).toLocaleString()}` : '—'}
+                      {ev.mrcCents != null
+                        ? `¥${Math.round(ev.mrcCents / 100).toLocaleString()}`
+                        : '—'}
                     </td>
                     <td className="px-6 py-4 text-xs text-gray-600">
-                      {ev.nrcCents != null ? `¥${Math.round(ev.nrcCents / 100).toLocaleString()}` : '—'}
+                      {ev.nrcCents != null
+                        ? `¥${Math.round(ev.nrcCents / 100).toLocaleString()}`
+                        : '—'}
                     </td>
                     <td className="px-6 py-4 text-gray-600 text-xs">
                       {new Date(ev.occurredAt).toLocaleString()}

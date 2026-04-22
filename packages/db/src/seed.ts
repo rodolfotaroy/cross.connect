@@ -1300,12 +1300,30 @@ async function main() {
   console.log('  ✓ 8 DedicatedCrossConnect records');
 
   // ── Bulk 500 SP cross-connects (load test data) ──────────────────────────
-  const bulkStatuses = ['draft', 'submitted', 'in_progress', 'completed', 'disconnected', 'cancelled'] as const;
+  const bulkStatuses = [
+    'draft',
+    'submitted',
+    'in_progress',
+    'completed',
+    'disconnected',
+    'cancelled',
+  ] as const;
   const bulkCompanies = [
-    'NTT Communications', 'SoftBank', 'KDDI', 'Internet Initiative Japan',
-    'Equinix Japan', 'Digital Realty Tokyo', 'Nexcenter', 'Colt Technology Japan',
-    'Zayo Japan', 'NEC Networks', 'Fujitsu Network', 'Tata Communications JP',
-    'PCCW Global JP', 'Telstra Japan', 'BT Japan',
+    'NTT Communications',
+    'SoftBank',
+    'KDDI',
+    'Internet Initiative Japan',
+    'Equinix Japan',
+    'Digital Realty Tokyo',
+    'Nexcenter',
+    'Colt Technology Japan',
+    'Zayo Japan',
+    'NEC Networks',
+    'Fujitsu Network',
+    'Tata Communications JP',
+    'PCCW Global JP',
+    'Telstra Japan',
+    'BT Japan',
   ];
   const bulkCustomerTypes = ['enterprise', 'carrier', 'cloud'];
   const bulkCableTypes = ['SMF', 'MMF'];

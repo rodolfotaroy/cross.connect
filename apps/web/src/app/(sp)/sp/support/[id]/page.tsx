@@ -2,6 +2,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { spSupportApi } from '@/lib/api/sp-support';
 import { auth } from '@/lib/auth/session';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AddCommentForm } from './add-comment-form';
 import { UpdateTicketStatusForm } from './update-status-form';
@@ -27,6 +28,17 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Link
+          href="/sp/support"
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Tickets
+        </Link>
+      </div>
       <PageHeader
         title={ticket.subject}
         subtitle={`${ticket.category} · ${ticket.priority} priority`}

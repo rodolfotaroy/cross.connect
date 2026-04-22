@@ -88,61 +88,10 @@ export default async function SpReportsPage({
           <SummaryCard label="Total Records" value={result.meta.total} />
           <SummaryCard label="Total MRC" value={`¥${Math.round(totalMrc).toLocaleString()}`} />
           <SummaryCard label="Total NRC" value={`¥${Math.round(totalNrc).toLocaleString()}`} />
-          <SummaryCard label="Annual Recurring Revenue" value={`¥${Math.round(arr).toLocaleString()}`} />
-        </div>
-      )}
-
-      {/* Financial Breakdowns */}
-      {summary && (summary.byStatus.length > 0 || summary.byQuarter.length > 0) && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {summary.byStatus.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white p-4">
-              <h3 className="mb-3 text-sm font-semibold text-gray-700">Status Breakdown</h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs font-medium uppercase text-gray-500">
-                    <th className="pb-2">Status</th>
-                    <th className="pb-2 text-right">Count</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {summary.byStatus.map((s) => (
-                    <tr key={s.status}>
-                      <td className="py-1.5 capitalize">{s.status.replace(/_/g, ' ')}</td>
-                      <td className="py-1.5 text-right font-medium">{s.count}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {summary.byQuarter.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white p-4">
-              <h3 className="mb-3 text-sm font-semibold text-gray-700">Revenue by Quarter</h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs font-medium uppercase text-gray-500">
-                    <th className="pb-2">Period</th>
-                    <th className="pb-2 text-right">Count</th>
-                    <th className="pb-2 text-right">MRC</th>
-                    <th className="pb-2 text-right">NRC</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {summary.byQuarter.map((q) => (
-                    <tr key={`${q.year}-${q.quarter}`}>
-                      <td className="py-1.5">
-                        {q.year} Q{q.quarter}
-                      </td>
-                      <td className="py-1.5 text-right">{q.count}</td>
-                      <td className="py-1.5 text-right">¥{Math.round(Number(q.totalMrc)).toLocaleString()}</td>
-                      <td className="py-1.5 text-right">¥{Math.round(Number(q.totalNrc)).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <SummaryCard
+            label="Annual Recurring Revenue"
+            value={`¥${Math.round(arr).toLocaleString()}`}
+          />
         </div>
       )}
 
