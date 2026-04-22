@@ -17,6 +17,7 @@ export interface UpdateOrganizationInput {
   name?: string;
   contactEmail?: string;
   contactPhone?: string;
+  notes?: string;
 }
 
 export interface CreateUserInput {
