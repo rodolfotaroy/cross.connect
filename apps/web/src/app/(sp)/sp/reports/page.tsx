@@ -299,9 +299,7 @@ export default async function SpReportsPage({
                       {xc.year ? `${xc.year} Q${xc.quarter ?? 'â€”'}` : 'â€”'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.dateCompleted
-                        ? new Date(xc.dateCompleted).toLocaleDateString()
-                        : 'â€”'}
+                      {xc.dateCompleted ? new Date(xc.dateCompleted).toLocaleDateString() : 'â€”'}
                     </td>
                   </tr>
                 ))}
@@ -347,4 +345,3 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
     </div>
   );
 }
-

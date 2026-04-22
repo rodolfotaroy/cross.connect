@@ -31,7 +31,9 @@ export default async function CustomerLayout({ children }: { children: React.Rea
         userLine1={user?.name ?? user?.email}
         userLine2={user?.orgName ?? (user?.orgId ? `Org: ${user.orgId.slice(0, 8)}…` : undefined)}
       />
-      <main className="min-w-0 flex-1 overflow-auto bg-gray-50 px-4 py-4 pt-20 sm:px-6 sm:py-6 sm:pr-8 lg:pt-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-auto bg-gray-50 px-4 py-4 pt-20 sm:px-6 sm:py-6 sm:pr-8 lg:pt-6">
+        {children}
+      </main>
     </div>
   );
 }

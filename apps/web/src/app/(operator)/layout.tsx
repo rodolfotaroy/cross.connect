@@ -40,7 +40,9 @@ export default async function OperatorLayout({ children }: { children: React.Rea
             : user?.role?.replace(/_/g, ' ')
         }
       />
-      <main className="min-w-0 flex-1 overflow-auto bg-gray-50 px-4 py-4 pt-20 sm:px-6 sm:py-6 sm:pr-8 lg:pt-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-auto bg-gray-50 px-4 py-4 pt-20 sm:px-6 sm:py-6 sm:pr-8 lg:pt-6">
+        {children}
+      </main>
     </div>
   );
 }
