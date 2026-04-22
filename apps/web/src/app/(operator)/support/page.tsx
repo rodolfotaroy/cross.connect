@@ -1,6 +1,5 @@
 import { PageHeader } from '@/components/ui/page-header';
 import { opSupportApi } from '@/lib/api/op-support';
-import { orgsApi } from '@/lib/api/organizations';
 import { auth } from '@/lib/auth/session';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -88,7 +87,15 @@ export default async function OpSupportPage({
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {['Ticket #', 'Organization', 'Subject', 'Portal', 'Priority', 'Status', 'Created'].map((h) => (
+                  {[
+                    'Ticket #',
+                    'Organization',
+                    'Subject',
+                    'Portal',
+                    'Priority',
+                    'Status',
+                    'Created',
+                  ].map((h) => (
                     <th
                       key={h}
                       scope="col"
@@ -110,9 +117,7 @@ export default async function OpSupportPage({
                     <td className="whitespace-nowrap px-6 py-3 text-gray-600">
                       {t.organization?.name ?? t.organizationId.slice(0, 8) + '…'}
                     </td>
-                    <td className="max-w-xs truncate px-6 py-3 text-gray-900">
-                      {t.subject}
-                    </td>
+                    <td className="max-w-xs truncate px-6 py-3 text-gray-900">{t.subject}</td>
                     <td className="whitespace-nowrap px-6 py-3">
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PORTAL_BADGE[t.portal] ?? 'bg-gray-100 text-gray-600'}`}

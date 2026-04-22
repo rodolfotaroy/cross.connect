@@ -9,15 +9,22 @@ import type { AuthenticatedUser } from '../../../common/decorators/current-user.
 import { buildPaginatedMeta } from '../../../common/pagination/paginate';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 
+// Roles that manage the platform — they see ALL organisations' tickets.
+const OPERATOR_ROLES = new Set(['super_admin', 'ops_manager', 'ops_technician']);
+
 @Injectable()
 export class SupportService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listTickets(user: AuthenticatedUser, query: ListSupportTicketsInput, portalFilter?: 'sp' | 'op') {
+  async listTickets(
+    user: AuthenticatedUser,
+    query: ListSupportTicketsInput,
+    portalFilter?: 'sp' | 'op',
+  ) {
     const { page, limit, sortBy, sortDir, status, category } = query;
     const where: Record<string, unknown> = {};
-    // super_admin and operator roles see all orgs' tickets; SP roles see only their own org
-    if (user.role !== 'super_admin' && user.orgId) where['organizationId'] = user.orgId;
+    // Operator/admin roles see all orgs; SP/customer roles are scoped to their own org.
+    if (!OPERATOR_ROLES.has(user.role) && user.orgId) where['organizationId'] = user.orgId;
     if (status) where['status'] = status;
     if (category) where['category'] = category;
     if (portalFilter) where['portal'] = portalFilter;
@@ -46,7 +53,7 @@ export class SupportService {
     const ticket = await this.prisma.supportTicket.findFirst({
       where: {
         id: ticketId,
-        ...(user.role !== 'super_admin' && user.orgId ? { organizationId: user.orgId } : {}),
+        ...(!OPERATOR_ROLES.has(user.role) && user.orgId ? { organizationId: user.orgId } : {}),
       },
       include: {
         createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
@@ -63,7 +70,11 @@ export class SupportService {
     return ticket;
   }
 
-  async createTicket(dto: CreateSupportTicketInput, user: AuthenticatedUser, portal: 'sp' | 'op' = 'sp') {
+  async createTicket(
+    dto: CreateSupportTicketInput,
+    user: AuthenticatedUser,
+    portal: 'sp' | 'op' = 'sp',
+  ) {
     const orgId = user.orgId;
     if (!orgId) throw new ForbiddenException('An orgId is required to create a support ticket');
 
@@ -93,11 +104,7 @@ export class SupportService {
     });
   }
 
-  async createTicketForOrg(
-    dto: CreateSupportTicketInput,
-    orgId: string,
-    user: AuthenticatedUser,
-  ) {
+  async createTicketForOrg(dto: CreateSupportTicketInput, orgId: string, user: AuthenticatedUser) {
     return this.prisma.$transaction(async (tx) => {
       const counter = await tx.ticketCounter.update({
         where: { id: 1 },
@@ -166,7 +173,7 @@ export class SupportService {
     const ticket = await this.prisma.supportTicket.findFirst({
       where: {
         id: ticketId,
-        ...(user.role !== 'super_admin' && user.orgId ? { organizationId: user.orgId } : {}),
+        ...(!OPERATOR_ROLES.has(user.role) && user.orgId ? { organizationId: user.orgId } : {}),
       },
     });
     if (!ticket) throw new NotFoundException('Ticket not found');
@@ -192,7 +199,7 @@ export class SupportService {
     const ticket = await this.prisma.supportTicket.findFirst({
       where: {
         id: ticketId,
-        ...(user.role !== 'super_admin' && user.orgId ? { organizationId: user.orgId } : {}),
+        ...(!OPERATOR_ROLES.has(user.role) && user.orgId ? { organizationId: user.orgId } : {}),
       },
     });
     if (!ticket) throw new NotFoundException('Ticket not found');
