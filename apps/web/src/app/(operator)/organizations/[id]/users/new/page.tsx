@@ -22,7 +22,7 @@ export default async function AddUserPage({ params }: { params: Promise<{ id: st
           { label: 'Add User' },
         ]}
       />
-      <AddUserForm orgId={id} orgName={org.name} token={token} />
+      <AddUserForm orgId={id} orgName={org.name} orgType={org.orgType} token={token} />
     </div>
   );
 }

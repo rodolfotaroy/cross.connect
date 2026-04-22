@@ -7,6 +7,7 @@ import { useState } from 'react';
 interface Props {
   orgId: string;
   orgName: string;
+  orgType: string;
   token: string;
 }
 
@@ -14,7 +15,7 @@ const labelCls = 'block text-sm font-medium text-gray-700 mb-1';
 const inputCls =
   'block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500';
 
-const ROLES = [
+const CUSTOMER_ROLES = [
   { value: 'customer_admin', label: 'Customer Admin' },
   { value: 'customer_orderer', label: 'Customer Orderer' },
   { value: 'customer_viewer', label: 'Customer Viewer' },
@@ -22,13 +23,22 @@ const ROLES = [
   { value: 'ops_manager', label: 'Ops Manager' },
 ];
 
-export function AddUserForm({ orgId, orgName, token }: Props) {
+const SP_ROLES = [
+  { value: 'sp_admin', label: 'SP Admin' },
+  { value: 'sp_ops', label: 'SP Operations' },
+  { value: 'sp_viewer', label: 'SP Viewer' },
+  { value: 'sp_report', label: 'SP Reports' },
+];
+
+export function AddUserForm({ orgId, orgName, orgType, token }: Props) {
+  const isSp = orgType === 'service_partner';
+  const ROLES = isSp ? SP_ROLES : CUSTOMER_ROLES;
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('customer_admin');
+  const [role, setRole] = useState(isSp ? 'sp_admin' : 'customer_admin');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

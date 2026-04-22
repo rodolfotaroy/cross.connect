@@ -7,6 +7,7 @@ export const OrgType = {
   carrier: 'carrier',
   cloud_provider: 'cloud_provider',
   exchange: 'exchange',
+  service_partner: 'service_partner',
 } as const;
 export type OrgType = (typeof OrgType)[keyof typeof OrgType];
 
