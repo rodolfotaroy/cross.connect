@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CreateSupportTicketSchema,
@@ -6,6 +15,7 @@ import {
   ListSupportTicketsSchema,
   UpdateTicketStatusSchema,
 } from '@xc/types/api';
+import { z } from 'zod';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
@@ -14,22 +24,20 @@ import { RolesGuard } from '../../../common/guards/roles.guard';
 import { ZodValidationPipe } from '../../../common/pipes/zod-validation.pipe';
 import { SupportService } from './support.service';
 
-@ApiTags('sp/support')
+const CreateOpTicketSchema = CreateSupportTicketSchema.extend({
+  orgId: z.string().cuid(),
+});
+
+@ApiTags('op/support')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('super_admin', 'sp_admin', 'sp_ops', 'sp_viewer', 'sp_report')
-@Controller('sp/support')
-export class SupportController {
+@Roles('super_admin', 'ops_manager', 'ops_technician')
+@Controller('op/support')
+export class OpSupportController {
   constructor(private readonly svc: SupportService) {}
 
-  @Get('contact')
-  @ApiOperation({ summary: 'Get app owner contact details' })
-  contact() {
-    return this.svc.getContactDetails();
-  }
-
   @Get('tickets')
-  @ApiOperation({ summary: 'List support tickets for the authenticated org' })
+  @ApiOperation({ summary: 'List all support tickets (operator view — all orgs, all portals)' })
   list(
     @Query(new ZodValidationPipe(ListSupportTicketsSchema))
     query: typeof ListSupportTicketsSchema._type,
@@ -39,31 +47,31 @@ export class SupportController {
   }
 
   @Get('tickets/:id')
-  @ApiOperation({ summary: 'Get ticket detail with comments' })
+  @ApiOperation({ summary: 'Get ticket detail' })
   getOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.svc.getTicket(id, user);
   }
 
   @Post('tickets')
-  @ApiOperation({ summary: 'Create a new support ticket' })
+  @ApiOperation({ summary: 'Create an OP-prefixed ticket for an organization' })
   create(
-    @Body(new ZodValidationPipe(CreateSupportTicketSchema))
-    dto: typeof CreateSupportTicketSchema._type,
+    @Body(new ZodValidationPipe(CreateOpTicketSchema))
+    dto: z.infer<typeof CreateOpTicketSchema>,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.svc.createTicket(dto, user, 'sp');
+    const { orgId, ...ticketDto } = dto;
+    return this.svc.createTicketForOrg(ticketDto, orgId, user);
   }
 
   @Patch('tickets/:id/status')
-  @Roles('super_admin', 'sp_admin')
-  @ApiOperation({ summary: 'Update ticket status (sp_admin only)' })
+  @ApiOperation({ summary: 'Update ticket status (operator roles)' })
   updateStatus(
     @Param('id') id: string,
     @Body(new ZodValidationPipe(UpdateTicketStatusSchema))
     dto: typeof UpdateTicketStatusSchema._type,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.svc.updateTicketStatus(id, dto, user);
+    return this.svc.updateTicketStatusOp(id, dto, user);
   }
 
   @Post('tickets/:id/comments')

@@ -94,7 +94,11 @@ export class DedicatedXcService {
 
   async getOne(id: string, user: AuthenticatedUser) {
     const record = await this.prisma.dedicatedCrossConnect.findFirst({
-      where: { id, ...(user.role !== 'super_admin' && user.orgId ? { organizationId: user.orgId } : {}), deletedAt: null },
+      where: {
+        id,
+        ...(user.role !== 'super_admin' && user.orgId ? { organizationId: user.orgId } : {}),
+        deletedAt: null,
+      },
       include: {
         hops: { orderBy: { hopNumber: 'asc' } },
         site: { select: { id: true, name: true, code: true } },

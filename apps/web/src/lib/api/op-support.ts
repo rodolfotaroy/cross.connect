@@ -37,18 +37,11 @@ export interface SupportTicketDto {
   updatedAt: string;
 }
 
-export interface ContactDetailsDto {
-  name: string;
-  email: string;
-  phone: string | null;
-  hours: string;
+export interface CreateOpTicketInput extends CreateSupportTicketInput {
+  orgId: string;
 }
 
-export const spSupportApi = {
-  getContact(token: string) {
-    return apiClient.get<ContactDetailsDto>('/sp/support/contact', token);
-  },
-
+export const opSupportApi = {
   listTickets(token: string, params?: Partial<ListSupportTicketsInput>) {
     const qs = new URLSearchParams();
     if (params?.page) qs.set('page', String(params.page));
@@ -57,24 +50,24 @@ export const spSupportApi = {
     if (params?.category) qs.set('category', params.category);
     const q = qs.toString();
     return apiClient.get<{ data: SupportTicketDto[]; meta: any }>(
-      `/sp/support/tickets${q ? `?${q}` : ''}`,
+      `/op/support/tickets${q ? `?${q}` : ''}`,
       token,
     );
   },
 
   getTicket(token: string, id: string) {
-    return apiClient.get<SupportTicketDto>(`/sp/support/tickets/${id}`, token);
+    return apiClient.get<SupportTicketDto>(`/op/support/tickets/${id}`, token);
   },
 
-  createTicket(token: string, data: CreateSupportTicketInput) {
-    return apiClient.post<SupportTicketDto>('/sp/support/tickets', data, token);
+  createTicket(token: string, data: CreateOpTicketInput) {
+    return apiClient.post<SupportTicketDto>('/op/support/tickets', data, token);
   },
 
   updateStatus(token: string, id: string, data: UpdateTicketStatusInput) {
-    return apiClient.patch<SupportTicketDto>(`/sp/support/tickets/${id}/status`, data, token);
+    return apiClient.patch<SupportTicketDto>(`/op/support/tickets/${id}/status`, data, token);
   },
 
   addComment(token: string, id: string, data: CreateTicketCommentInput) {
-    return apiClient.post<TicketCommentDto>(`/sp/support/tickets/${id}/comments`, data, token);
+    return apiClient.post<TicketCommentDto>(`/op/support/tickets/${id}/comments`, data, token);
   },
 };

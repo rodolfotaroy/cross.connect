@@ -1,13 +1,13 @@
 import { PageHeader } from '@/components/ui/page-header';
-import { spSupportApi } from '@/lib/api/sp-support';
+import { opSupportApi } from '@/lib/api/op-support';
 import { auth } from '@/lib/auth/session';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AddCommentForm } from './add-comment-form';
-import { UpdateTicketStatusForm } from './update-status-form';
+import { OpAddCommentForm } from './add-comment-form';
+import { OpUpdateStatusForm } from './update-status-form';
 
-export const metadata: Metadata = { title: 'Ticket — SP Portal' };
+export const metadata: Metadata = { title: 'Ticket — Operator Portal' };
 
 const STATUS_COLOR: Record<string, string> = {
   open: 'bg-blue-100 text-blue-700',
@@ -16,21 +16,24 @@ const STATUS_COLOR: Record<string, string> = {
   closed: 'bg-gray-100 text-gray-500',
 };
 
-export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+const PORTAL_BADGE: Record<string, string> = {
+  sp: 'bg-purple-100 text-purple-700',
+  op: 'bg-blue-100 text-blue-700',
+};
+
+export default async function OpTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
-  const role = (session?.user as any)?.role as string;
-  const isAdmin = role === 'super_admin' || role === 'sp_admin';
 
-  const ticket = await spSupportApi.getTicket(token, id).catch(() => null);
+  const ticket = await opSupportApi.getTicket(token, id).catch(() => null);
   if (!ticket) notFound();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Link
-          href="/sp/support"
+          href="/support"
           className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
         >
           <svg
@@ -46,26 +49,30 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
           Back to Tickets
         </Link>
       </div>
+
       <PageHeader
         title={ticket.subject}
-        subtitle={`${ticket.category} · ${ticket.priority} priority`}
-        actions={isAdmin && <UpdateTicketStatusForm ticketId={id} currentStatus={ticket.status} />}
+        subtitle={`${ticket.category} · ${ticket.priority} priority · ${ticket.organization?.name ?? ticket.organizationId}`}
+        actions={<OpUpdateStatusForm ticketId={id} currentStatus={ticket.status} />}
       />
 
-      {/* Status */}
+      {/* Status + portal badge */}
       <div className="flex flex-wrap items-center gap-3">
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[ticket.status] ?? 'bg-gray-100 text-gray-600'}`}
         >
           {ticket.status.replace('_', ' ')}
         </span>
-        {ticket.ticketNumber && (
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 font-mono text-xs font-medium text-gray-700">
-            {ticket.ticketNumber}
-          </span>
-        )}
+        <span
+          className={`inline-flex items-center rounded-full px-2.5 py-1 font-mono text-xs font-medium ${PORTAL_BADGE[ticket.portal] ?? 'bg-gray-100 text-gray-600'}`}
+        >
+          {ticket.ticketNumber}
+        </span>
         <span className="text-sm text-gray-500">
-          Opened {new Date(ticket.createdAt).toLocaleDateString()}
+          Opened {new Date(ticket.createdAt).toLocaleDateString()} by{' '}
+          {ticket.createdBy
+            ? `${ticket.createdBy.firstName} ${ticket.createdBy.lastName}`.trim()
+            : '—'}
         </span>
       </div>
 
@@ -74,6 +81,20 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Description</h2>
         <p className="whitespace-pre-wrap text-sm text-gray-700">{ticket.description}</p>
       </div>
+
+      {/* Resolution note (if resolved/closed) */}
+      {ticket.resolutionNote && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+          <h2 className="mb-2 text-sm font-semibold text-green-800">Resolution Note</h2>
+          <p className="whitespace-pre-wrap text-sm text-green-700">{ticket.resolutionNote}</p>
+          {ticket.resolvedBy && (
+            <p className="mt-2 text-xs text-green-600">
+              Resolved by {ticket.resolvedBy.firstName} {ticket.resolvedBy.lastName}
+              {ticket.resolvedAt ? ` on ${new Date(ticket.resolvedAt).toLocaleDateString()}` : ''}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Comments */}
       <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -86,7 +107,9 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
               <div key={c.id} className="rounded-md bg-gray-50 p-4">
                 <div className="mb-1 flex items-center gap-2 text-xs text-gray-400">
                   <span className="font-medium text-gray-600">
-                    {c.author?.name ?? c.author?.email ?? 'Unknown'}
+                    {c.author
+                      ? `${c.author.firstName} ${c.author.lastName}`.trim() || c.author.email
+                      : 'Unknown'}
                   </span>
                   <span>·</span>
                   <span>{new Date(c.createdAt).toLocaleString()}</span>
@@ -102,7 +125,7 @@ export default async function TicketDetailPage({ params }: { params: Promise<{ i
         {ticket.status !== 'closed' && (
           <div className="mt-6 border-t border-gray-100 pt-6">
             <h3 className="mb-3 text-sm font-semibold text-gray-900">Add Comment</h3>
-            <AddCommentForm ticketId={id} />
+            <OpAddCommentForm ticketId={id} />
           </div>
         )}
       </div>

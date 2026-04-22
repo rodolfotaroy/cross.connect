@@ -203,5 +203,5 @@ function SummaryCard({
 }
 
 function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  return `\xA5${Math.round(amount).toLocaleString('ja-JP')}`;
 }

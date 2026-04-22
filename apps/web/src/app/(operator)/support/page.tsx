@@ -1,10 +1,11 @@
 import { PageHeader } from '@/components/ui/page-header';
-import { spSupportApi } from '@/lib/api/sp-support';
+import { opSupportApi } from '@/lib/api/op-support';
+import { orgsApi } from '@/lib/api/organizations';
 import { auth } from '@/lib/auth/session';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata: Metadata = { title: 'Support — SP Portal' };
+export const metadata: Metadata = { title: 'Support — Operator Portal' };
 
 const TICKET_STATUS_COLOR: Record<string, string> = {
   open: 'bg-blue-100 text-blue-700',
@@ -20,7 +21,12 @@ const PRIORITY_COLOR: Record<string, string> = {
   critical: 'bg-red-100 text-red-700',
 };
 
-export default async function SpSupportPage({
+const PORTAL_BADGE: Record<string, string> = {
+  sp: 'bg-purple-100 text-purple-700',
+  op: 'bg-blue-100 text-blue-700',
+};
+
+export default async function OpSupportPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; page?: string }>;
@@ -28,54 +34,27 @@ export default async function SpSupportPage({
   const sp = await searchParams;
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
-  const role = (session?.user as any)?.role as string;
-  const isAdmin = role === 'super_admin' || role === 'sp_admin';
 
   const page = Number(sp.page ?? '1');
 
-  const [contact, result] = await Promise.all([
-    spSupportApi.getContact(token).catch(() => null),
-    spSupportApi
-      .listTickets(token, { status: sp.status as any, page, limit: 25 })
-      .catch(() => ({ data: [], meta: { page: 1, limit: 25, total: 0, totalPages: 0 } })),
-  ]);
+  const result = await opSupportApi
+    .listTickets(token, { status: sp.status as any, page, limit: 25 })
+    .catch(() => ({ data: [], meta: { page: 1, limit: 25, total: 0, totalPages: 0 } }));
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Support"
-        subtitle="Manage support tickets and contact information"
+        title="Support Tickets"
+        subtitle="All support tickets across all organizations and portals"
         actions={
           <Link
-            href="/sp/support/new"
+            href="/support/new"
             className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
             + New Ticket
           </Link>
         }
       />
-
-      {/* Contact Details */}
-      {contact && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900">Contact Our Team</h2>
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {contact.name && <Detail label="Name" value={contact.name} />}
-            {contact.email && (
-              <div>
-                <dt className="text-xs font-medium uppercase text-gray-500">Email</dt>
-                <dd className="mt-0.5 text-sm">
-                  <a href={`mailto:${contact.email}`} className="text-brand-600 hover:underline">
-                    {contact.email}
-                  </a>
-                </dd>
-              </div>
-            )}
-            {contact.phone && <Detail label="Phone" value={contact.phone} />}
-            {contact.hours && <Detail label="Hours" value={contact.hours} />}
-          </dl>
-        </div>
-      )}
 
       {/* Filter */}
       <form method="GET" className="flex flex-wrap gap-3">
@@ -109,7 +88,7 @@ export default async function SpSupportPage({
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {['#', 'Subject', 'Category', 'Priority', 'Status', 'Created'].map((h) => (
+                  {['Ticket #', 'Organization', 'Subject', 'Portal', 'Priority', 'Status', 'Created'].map((h) => (
                     <th
                       key={h}
                       scope="col"
@@ -120,19 +99,26 @@ export default async function SpSupportPage({
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-gray-200">
                 {result.data.map((t: any) => (
                   <tr key={t.id} className="hover:bg-gray-50">
-                    <td className="whitespace-nowrap px-6 py-3 font-mono text-xs font-medium text-gray-700">
-                      {t.ticketNumber ?? t.id.slice(0, 8)}
-                    </td>
-                    <td className="px-6 py-3 font-medium">
-                      <Link href={`/sp/support/${t.id}`} className="text-brand-600 hover:underline">
-                        {t.subject}
+                    <td className="whitespace-nowrap px-6 py-3 font-mono font-medium">
+                      <Link href={`/support/${t.id}`} className="text-brand-600 hover:underline">
+                        {t.ticketNumber}
                       </Link>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-3 text-gray-600 capitalize">
-                      {t.category}
+                    <td className="whitespace-nowrap px-6 py-3 text-gray-600">
+                      {t.organization?.name ?? t.organizationId.slice(0, 8) + '…'}
+                    </td>
+                    <td className="max-w-xs truncate px-6 py-3 text-gray-900">
+                      {t.subject}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PORTAL_BADGE[t.portal] ?? 'bg-gray-100 text-gray-600'}`}
+                      >
+                        {(t.portal ?? 'sp').toUpperCase()}
+                      </span>
                     </td>
                     <td className="whitespace-nowrap px-6 py-3">
                       <span
@@ -148,7 +134,7 @@ export default async function SpSupportPage({
                         {t.status.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="whitespace-nowrap px-6 py-3 text-gray-600">
+                    <td className="whitespace-nowrap px-6 py-3 text-gray-500">
                       {new Date(t.createdAt).toLocaleDateString()}
                     </td>
                   </tr>
@@ -156,17 +142,35 @@ export default async function SpSupportPage({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {result.meta.totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-200 px-6 py-3 text-sm">
+              <span className="text-gray-500">
+                Page {result.meta.page} of {result.meta.totalPages} · {result.meta.total} total
+              </span>
+              <div className="flex gap-2">
+                {result.meta.page > 1 && (
+                  <Link
+                    href={`?page=${result.meta.page - 1}${sp.status ? `&status=${sp.status}` : ''}`}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1 hover:bg-gray-50"
+                  >
+                    ← Prev
+                  </Link>
+                )}
+                {result.meta.page < result.meta.totalPages && (
+                  <Link
+                    href={`?page=${result.meta.page + 1}${sp.status ? `&status=${sp.status}` : ''}`}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1 hover:bg-gray-50"
+                  >
+                    Next →
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </div>
-  );
-}
-
-function Detail({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium uppercase text-gray-500">{label}</dt>
-      <dd className="mt-0.5 text-sm text-gray-900">{value ?? '—'}</dd>
     </div>
   );
 }

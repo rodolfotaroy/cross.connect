@@ -23,6 +23,7 @@ export default async function OperatorLayout({ children }: { children: React.Rea
     { href: '/inventory', label: 'Inventory' },
     { href: '/locations', label: 'Locations' },
     { href: '/organizations', label: 'Organizations' },
+    { href: '/support', label: 'Support' },
     { href: '/billing', label: 'Billing Events' },
     { href: '/audit', label: 'Audit Log' },
     ...(user?.role === 'super_admin' ? [{ href: '/sp', label: 'SP Portal' }] : []),

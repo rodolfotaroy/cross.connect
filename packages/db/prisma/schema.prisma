@@ -1139,12 +1139,14 @@ model DedicatedXcHop {
 
 // SupportTicket: a simple ticketing system for dedicated portal users.
 model SupportTicket {
-  id          String         @id @default(cuid())
-  subject     String
-  description String
-  category    TicketCategory @default(issue)
-  priority    TicketPriority @default(medium)
-  status      TicketStatus   @default(open)
+  id           String         @id @default(cuid())
+  ticketNumber String         @unique
+  portal       String         @default("sp") // "sp" | "op"
+  subject      String
+  description  String
+  category     TicketCategory @default(issue)
+  priority     TicketPriority @default(medium)
+  status       TicketStatus   @default(open)
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -1166,6 +1168,13 @@ model SupportTicket {
   @@index([organizationId, status])
   @@index([createdById])
   @@index([status])
+  @@index([portal])
+}
+
+// TicketCounter: single-row global counter for SP/OP ticket numbering.
+model TicketCounter {
+  id       Int @id @default(1)
+  lastUsed Int @default(0)
 }
 
 // TicketComment: threaded comment on a SupportTicket.
