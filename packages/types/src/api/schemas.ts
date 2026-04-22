@@ -149,6 +149,26 @@ export const UpdateUserRoleSchema = z.object({
 });
 export type UpdateUserRoleInput = z.infer<typeof UpdateUserRoleSchema>;
 
+export const UpdateUserSchema = z.object({
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  email: z.string().email().max(255).optional(),
+  role: z
+    .enum([
+      'ops_manager',
+      'ops_technician',
+      'customer_admin',
+      'customer_orderer',
+      'customer_viewer',
+      'sp_admin',
+      'sp_ops',
+      'sp_viewer',
+      'sp_report',
+    ])
+    .optional(),
+});
+export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
+
 // ── Locations — Site ──────────────────────────────────────────────────────────
 
 export const CreateSiteSchema = z.object({

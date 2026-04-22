@@ -30,6 +30,13 @@ export interface CreateUserInput {
   role: string;
 }
 
+export interface UpdateUserInput {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+}
+
 export const orgsApi = {
   list(
     token: string,
@@ -73,6 +80,10 @@ export const orgsApi = {
 
   updateUserRole(token: string, userId: string, role: string) {
     return apiClient.patch<UserDto>(`/organizations/users/${userId}/role`, { role }, token);
+  },
+
+  updateUser(token: string, userId: string, dto: UpdateUserInput) {
+    return apiClient.patch<UserDto>(`/organizations/users/${userId}`, dto, token);
   },
 
   deactivateUser(token: string, userId: string) {

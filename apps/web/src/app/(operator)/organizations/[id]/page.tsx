@@ -113,13 +113,21 @@ export default async function OrganizationDetailPage({
                     </td>
                     {canManage && (
                       <td className="px-6 py-3 text-right">
-                        {u.isActive && (
-                          <DeactivateUserButton
-                            userId={u.id}
-                            userName={`${u.firstName} ${u.lastName}`}
-                            token={token}
-                          />
-                        )}
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/organizations/${id}/users/${u.id}/edit`}
+                            className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                          >
+                            Edit
+                          </Link>
+                          {u.isActive && (
+                            <DeactivateUserButton
+                              userId={u.id}
+                              userName={`${u.firstName} ${u.lastName}`}
+                              token={token}
+                            />
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>

@@ -11,6 +11,7 @@ import {
   CreateUserDto,
   ListOrganizationsDto,
   UpdateOrganizationDto,
+  UpdateUserDto,
   UpdateUserRoleDto,
 } from './dto/organization.dto';
 import { OrganizationsService } from './organizations.service';
@@ -100,6 +101,17 @@ export class OrganizationsController {
     @CurrentUser() actor: AuthenticatedUser,
   ) {
     return this.svc.updateUserRole(userId, dto, actor);
+  }
+
+  @Patch('users/:userId')
+  @Roles('super_admin', 'customer_admin')
+  @ApiOperation({ summary: 'Update user profile fields (name, email, role)' })
+  updateUser(
+    @Param('userId') userId: string,
+    @Body(new ZodValidationPipe(UpdateUserDto)) dto: UpdateUserDto,
+    @CurrentUser() actor: AuthenticatedUser,
+  ) {
+    return this.svc.updateUser(userId, dto, actor);
   }
 
   @Patch('users/:userId/reactivate')

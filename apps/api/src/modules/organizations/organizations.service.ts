@@ -13,6 +13,7 @@ import type {
   CreateUserDto,
   ListOrganizationsDto,
   UpdateOrganizationDto,
+  UpdateUserDto,
   UpdateUserRoleDto,
 } from './dto/organization.dto';
 
@@ -192,6 +193,41 @@ export class OrganizationsService {
       where: { id: userId },
       data: { isActive: true },
       select: { id: true, email: true, isActive: true },
+    });
+  }
+
+  async updateUser(userId: string, dto: UpdateUserDto, actor: AuthenticatedUser) {
+    const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    // customer_admin may only update users within their own organisation.
+    if (actor.role === 'customer_admin' && target.orgId !== actor.orgId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    // Prevent privilege escalation: only super_admin may assign privileged roles.
+    if (dto.role && actor.role !== 'super_admin' && PRIVILEGED_ROLES.has(dto.role)) {
+      throw new ForbiddenException('Only super_admin can assign operator or super_admin roles');
+    }
+
+    // Check email uniqueness if changing email.
+    if (dto.email && dto.email !== target.email) {
+      const conflict = await this.prisma.user.findUnique({ where: { email: dto.email } });
+      if (conflict) throw new ConflictException(`Email '${dto.email}' already registered`);
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        orgId: true,
+        isActive: true,
+        createdAt: true,
+      },
     });
   }
 }
