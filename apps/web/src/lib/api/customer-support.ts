@@ -65,23 +65,23 @@ export const customerSupportApi = {
     return apiClient.get<CustomerSupportTicketDto>(`/portal/support/tickets/${id}`, token);
   },
 
-  createTicket(token: string, dto: Omit<CreateSupportTicketInput, never>) {
-    return apiClient.post<CustomerSupportTicketDto>('/portal/support/tickets', token, dto);
+  createTicket(token: string, dto: CreateSupportTicketInput) {
+    return apiClient.post<CustomerSupportTicketDto>('/portal/support/tickets', dto, token);
   },
 
   updateStatus(token: string, id: string, dto: UpdateTicketStatusInput) {
     return apiClient.patch<CustomerSupportTicketDto>(
       `/portal/support/tickets/${id}/status`,
-      token,
       dto,
+      token,
     );
   },
 
   addComment(token: string, id: string, dto: CreateTicketCommentInput) {
     return apiClient.post<TicketCommentDto>(
       `/portal/support/tickets/${id}/comments`,
-      token,
       dto,
+      token,
     );
   },
 };
