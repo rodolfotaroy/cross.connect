@@ -126,6 +126,10 @@ export const CreateUserSchema = z.object({
     'customer_admin',
     'customer_orderer',
     'customer_viewer',
+    'sp_admin',
+    'sp_ops',
+    'sp_viewer',
+    'sp_report',
   ]),
 });
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;
@@ -137,6 +141,10 @@ export const UpdateUserRoleSchema = z.object({
     'customer_admin',
     'customer_orderer',
     'customer_viewer',
+    'sp_admin',
+    'sp_ops',
+    'sp_viewer',
+    'sp_report',
   ]),
 });
 export type UpdateUserRoleInput = z.infer<typeof UpdateUserRoleSchema>;
