@@ -27,7 +27,12 @@ export class ReportsService {
 
     const byQuarter = await this.prisma.dedicatedCrossConnect.groupBy({
       by: ['year', 'quarter'],
-      where: { ...(orgId ? { organizationId: orgId } : {}), year: { not: null }, quarter: { not: null }, deletedAt: null },
+      where: {
+        ...(orgId ? { organizationId: orgId } : {}),
+        year: { not: null },
+        quarter: { not: null },
+        deletedAt: null,
+      },
       _count: { id: true },
       _sum: { mrc: true, nrc: true },
       orderBy: [{ year: 'desc' }, { quarter: 'desc' }],

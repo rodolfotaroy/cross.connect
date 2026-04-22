@@ -37,7 +37,11 @@ export default async function SpLayout({ children }: { children: React.ReactNode
         subtitle={isSuperAdmin ? 'Viewing as Super Admin' : 'Service Partner Portal'}
         navItems={navItems}
         userLine1={user?.name ?? user?.email}
-        userLine2={isSuperAdmin ? 'super_admin' : (user?.orgName ?? (user?.orgId ? `Org: ${user.orgId.slice(0, 8)}…` : undefined))}
+        userLine2={
+          isSuperAdmin
+            ? 'super_admin'
+            : (user?.orgName ?? (user?.orgId ? `Org: ${user.orgId.slice(0, 8)}…` : undefined))
+        }
       />
       <main className="min-w-0 flex-1 overflow-auto bg-gray-50 px-4 py-4 pt-20 sm:px-6 sm:py-6 sm:pr-8 lg:pt-6">
         {children}

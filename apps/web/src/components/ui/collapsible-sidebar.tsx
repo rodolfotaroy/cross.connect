@@ -487,6 +487,7 @@ const NAV_ICONS: Record<string, SvgIcon> = {
   Inventory: InventoryIcon,
   'Audit Log': AuditIcon,
   'Billing Events': BillingIcon,
+  'SP Portal': CrossConnectsIcon,
   'My Orders': OrdersIcon,
   'Request Cross-Connect': NewOrderIcon,
   'Active Services': ServicesIcon,
