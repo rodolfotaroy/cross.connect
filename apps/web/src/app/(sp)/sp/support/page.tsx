@@ -46,7 +46,13 @@ function sortLink(
 export default async function SpSupportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string; q?: string; sortBy?: string; sortDir?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    page?: string;
+    q?: string;
+    sortBy?: string;
+    sortDir?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const session = await auth();
@@ -159,7 +165,10 @@ export default async function SpSupportPage({
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
                       >
-                        <Link href={href} className="group inline-flex items-center gap-1 hover:text-gray-900">
+                        <Link
+                          href={href}
+                          className="group inline-flex items-center gap-1 hover:text-gray-900"
+                        >
                           {label}
                           <span className="text-gray-400 group-hover:text-gray-600">
                             {dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '⇅'}

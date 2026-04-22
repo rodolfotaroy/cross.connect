@@ -7,6 +7,7 @@ export interface OrganizationDto {
   orgType: OrgType;
   contactEmail: string | null;
   contactPhone: string | null;
+  notes: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

@@ -91,7 +91,14 @@ export const CreateOrganizationSchema = z.object({
     .min(2)
     .max(20)
     .regex(/^[A-Z0-9_-]+$/, 'code must be uppercase alphanumeric'),
-  orgType: z.enum(['operator', 'customer', 'carrier', 'cloud_provider', 'exchange', 'service_partner']),
+  orgType: z.enum([
+    'operator',
+    'customer',
+    'carrier',
+    'cloud_provider',
+    'exchange',
+    'service_partner',
+  ]),
   contactEmail: z.string().email().optional(),
   contactPhone: z.string().max(30).optional(),
   notes: z.string().max(1000).optional(),

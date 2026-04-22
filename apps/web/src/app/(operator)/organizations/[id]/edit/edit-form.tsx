@@ -17,6 +17,7 @@ export function EditOrgForm({ org, token }: Props) {
   const [name, setName] = useState(org.name);
   const [contactEmail, setContactEmail] = useState(org.contactEmail ?? '');
   const [contactPhone, setContactPhone] = useState(org.contactPhone ?? '');
+  const [notes, setNotes] = useState(org.notes ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,6 +30,7 @@ export function EditOrgForm({ org, token }: Props) {
         name: name || undefined,
         contactEmail: contactEmail || undefined,
         contactPhone: contactPhone || undefined,
+        notes: notes || undefined,
       });
       router.push(`/organizations/${org.id}`);
       router.refresh();
@@ -76,6 +78,17 @@ export function EditOrgForm({ org, token }: Props) {
           placeholder="Optional"
           value={contactPhone}
           onChange={(e) => setContactPhone(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className={labelCls}>Notes</label>
+        <textarea
+          rows={3}
+          className={inputCls}
+          placeholder="Optional"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
         />
       </div>
 
