@@ -56,6 +56,10 @@ export class OrganizationsService {
 
   async update(id: string, dto: UpdateOrganizationDto) {
     await this.prisma.organization.findUniqueOrThrow({ where: { id } });
+    if (dto.code) {
+      const conflict = await this.prisma.organization.findUnique({ where: { code: dto.code } });
+      if (conflict && conflict.id !== id) throw new ConflictException(`Organization code '${dto.code}' already in use`);
+    }
     return this.prisma.organization.update({ where: { id }, data: dto });
   }
 

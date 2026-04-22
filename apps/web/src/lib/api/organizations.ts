@@ -15,6 +15,8 @@ export interface CreateOrganizationInput {
 
 export interface UpdateOrganizationInput {
   name?: string;
+  code?: string;
+  orgType?: OrgType;
   contactEmail?: string;
   contactPhone?: string;
   notes?: string;

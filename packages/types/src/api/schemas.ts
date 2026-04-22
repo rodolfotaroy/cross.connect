@@ -105,10 +105,7 @@ export const CreateOrganizationSchema = z.object({
 });
 export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;
 
-export const UpdateOrganizationSchema = CreateOrganizationSchema.partial().omit({
-  code: true,
-  orgType: true,
-});
+export const UpdateOrganizationSchema = CreateOrganizationSchema.partial();
 export type UpdateOrganizationInput = z.infer<typeof UpdateOrganizationSchema>;
 
 export const ListOrganizationsSchema = PaginationSchema.extend({
