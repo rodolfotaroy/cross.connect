@@ -562,8 +562,8 @@ export const ListReportsSchema = PaginationSchema.extend({
   status: z
     .enum(['draft', 'submitted', 'in_progress', 'completed', 'disconnected', 'cancelled'])
     .optional(),
-  dateFrom: z.string().datetime().optional(), // applied to billableDate
-  dateTo: z.string().datetime().optional(),
+  dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD, applied to dateCompleted
+  dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   orderingCompany: z.string().max(200).optional(),
   customerType: z.string().max(100).optional(),
 });

@@ -1,11 +1,11 @@
-import { DedicatedXcStatusBadge } from '@/components/ui/dedicated-xc-status-badge';
+﻿import { DedicatedXcStatusBadge } from '@/components/ui/dedicated-xc-status-badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { spReportsApi } from '@/lib/api/sp-reports';
 import { auth } from '@/lib/auth/session';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata: Metadata = { title: 'Reports — SP Portal' };
+export const metadata: Metadata = { title: 'Reports â€” SP Portal' };
 
 export default async function SpReportsPage({
   searchParams,
@@ -14,7 +14,9 @@ export default async function SpReportsPage({
     status?: string;
     year?: string;
     quarter?: string;
-    q?: string;
+    company?: string;
+    dateFrom?: string;
+    dateTo?: string;
     page?: string;
   }>;
 }) {
@@ -27,7 +29,9 @@ export default async function SpReportsPage({
     status: sp.status as any,
     year: sp.year ? Number(sp.year) : undefined,
     quarter: sp.quarter ? Number(sp.quarter) : undefined,
-    search: sp.q,
+    orderingCompany: sp.company,
+    dateFrom: sp.dateFrom,
+    dateTo: sp.dateTo,
     page,
     limit: 50,
   };
@@ -39,18 +43,34 @@ export default async function SpReportsPage({
       .catch(() => ({ data: [], meta: { page: 1, limit: 50, total: 0, totalPages: 0 } })),
   ]);
 
+  // Query string for pagination links (preserves form field names)
+  const pageQs = new URLSearchParams();
+  if (sp.status) pageQs.set('status', sp.status);
+  if (sp.year) pageQs.set('year', sp.year);
+  if (sp.quarter) pageQs.set('quarter', sp.quarter);
+  if (sp.company) pageQs.set('company', sp.company);
+  if (sp.dateFrom) pageQs.set('dateFrom', sp.dateFrom);
+  if (sp.dateTo) pageQs.set('dateTo', sp.dateTo);
+
+  // Query string for CSV export (maps to API param names)
   const exportQs = new URLSearchParams();
   if (sp.status) exportQs.set('status', sp.status);
   if (sp.year) exportQs.set('year', sp.year);
   if (sp.quarter) exportQs.set('quarter', sp.quarter);
-  if (sp.q) exportQs.set('search', sp.q);
+  if (sp.company) exportQs.set('orderingCompany', sp.company);
+  if (sp.dateFrom) exportQs.set('dateFrom', sp.dateFrom);
+  if (sp.dateTo) exportQs.set('dateTo', sp.dateTo);
   const exportHref = `/api/sp/export${exportQs.toString() ? `?${exportQs}` : ''}`;
+
+  const totalMrc = Number(summary?.totalMrc ?? 0);
+  const totalNrc = Number(summary?.totalNrc ?? 0);
+  const arr = totalMrc * 12;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Reports"
-        subtitle="Cross connect reporting &amp; analytics"
+        subtitle="Cross-connect financial reporting &amp; analytics"
         actions={
           <a
             href={exportHref}
@@ -62,63 +82,155 @@ export default async function SpReportsPage({
         }
       />
 
-      {/* Summary cards */}
+      {/* KPI Cards */}
       {summary && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <SummaryCard label="Total Records" value={result.meta.total} />
-          <SummaryCard label="Total MRC" value={`$${Number(summary.totalMrc ?? 0).toFixed(2)}`} />
-          <SummaryCard label="Total NRC" value={`$${Number(summary.totalNrc ?? 0).toFixed(2)}`} />
+          <SummaryCard label="Total MRC" value={`$${totalMrc.toFixed(2)}`} />
+          <SummaryCard label="Total NRC" value={`$${totalNrc.toFixed(2)}`} />
+          <SummaryCard label="Annual Recurring Revenue" value={`$${arr.toFixed(2)}`} />
+        </div>
+      )}
+
+      {/* Financial Breakdowns */}
+      {summary && (summary.byStatus.length > 0 || summary.byQuarter.length > 0) && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {summary.byStatus.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <h3 className="mb-3 text-sm font-semibold text-gray-700">Status Breakdown</h3>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="pb-2">Status</th>
+                    <th className="pb-2 text-right">Count</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {summary.byStatus.map((s) => (
+                    <tr key={s.status}>
+                      <td className="py-1.5 capitalize">{s.status.replace(/_/g, ' ')}</td>
+                      <td className="py-1.5 text-right font-medium">{s.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {summary.byQuarter.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <h3 className="mb-3 text-sm font-semibold text-gray-700">Revenue by Quarter</h3>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="pb-2">Period</th>
+                    <th className="pb-2 text-right">Count</th>
+                    <th className="pb-2 text-right">MRC</th>
+                    <th className="pb-2 text-right">NRC</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {summary.byQuarter.map((q) => (
+                    <tr key={`${q.year}-${q.quarter}`}>
+                      <td className="py-1.5">
+                        {q.year} Q{q.quarter}
+                      </td>
+                      <td className="py-1.5 text-right">{q.count}</td>
+                      <td className="py-1.5 text-right">${Number(q.totalMrc).toFixed(2)}</td>
+                      <td className="py-1.5 text-right">${Number(q.totalNrc).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
       {/* Filters */}
-      <form method="GET" className="flex flex-wrap gap-3">
-        <input
-          name="q"
-          type="search"
-          defaultValue={sp.q ?? ''}
-          placeholder="Search…"
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        />
-        <select
-          name="status"
-          defaultValue={sp.status ?? ''}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
-          <option value="">All statuses</option>
-          <option value="draft">Draft</option>
-          <option value="submitted">Submitted</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="disconnected">Disconnected</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <input
-          name="year"
-          type="number"
-          defaultValue={sp.year ?? ''}
-          placeholder="Year"
-          className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm"
-        />
-        <select
-          name="quarter"
-          defaultValue={sp.quarter ?? ''}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-        >
-          <option value="">All quarters</option>
-          <option value="1">Q1</option>
-          <option value="2">Q2</option>
-          <option value="3">Q3</option>
-          <option value="4">Q4</option>
-        </select>
+      <form method="GET" className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">Status</label>
+          <select
+            name="status"
+            defaultValue={sp.status ?? ''}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All statuses</option>
+            <option value="draft">Draft</option>
+            <option value="submitted">Submitted</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="disconnected">Disconnected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">Company</label>
+          <input
+            name="company"
+            type="text"
+            defaultValue={sp.company ?? ''}
+            placeholder="Ordering company"
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">From</label>
+          <input
+            name="dateFrom"
+            type="date"
+            defaultValue={sp.dateFrom ?? ''}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">To</label>
+          <input
+            name="dateTo"
+            type="date"
+            defaultValue={sp.dateTo ?? ''}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">Year</label>
+          <input
+            name="year"
+            type="number"
+            defaultValue={sp.year ?? ''}
+            placeholder="e.g. 2025"
+            className="w-28 rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-gray-500">Quarter</label>
+          <select
+            name="quarter"
+            defaultValue={sp.quarter ?? ''}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="">All quarters</option>
+            <option value="1">Q1</option>
+            <option value="2">Q2</option>
+            <option value="3">Q3</option>
+            <option value="4">Q4</option>
+          </select>
+        </div>
         <button
           type="submit"
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
         >
-          Filter
+          Apply
         </button>
+        <a
+          href="/sp/reports"
+          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+        >
+          Clear
+        </a>
       </form>
 
+      {/* Results table */}
       {result.data.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white px-6 py-8 text-center text-sm text-gray-400">
           No records match the selected filters
@@ -137,8 +249,8 @@ export default async function SpReportsPage({
                     'Bandwidth',
                     'MRC',
                     'NRC',
-                    'Year',
-                    'Q',
+                    'Billable Date',
+                    'Year / Q',
                     'Completed',
                   ].map((h) => (
                     <th
@@ -163,29 +275,33 @@ export default async function SpReportsPage({
                       </Link>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.circuitId ?? '—'}
+                      {xc.circuitId ?? 'â€”'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <DedicatedXcStatusBadge status={xc.status} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.orderingCompany ?? '—'}
+                      {xc.orderingCompany ?? 'â€”'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.bandwidth ?? '—'}
+                      {xc.bandwidth ?? 'â€”'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : '—'}
+                      {xc.mrc ? `$${Number(xc.mrc).toFixed(2)}` : 'â€”'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : '—'}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-gray-600">{xc.year ?? '—'}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.quarter ? `Q${xc.quarter}` : '—'}
+                      {xc.nrc ? `$${Number(xc.nrc).toFixed(2)}` : 'â€”'}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-gray-600">
-                      {xc.dateCompleted ? new Date(xc.dateCompleted).toLocaleDateString() : '—'}
+                      {xc.billableDate ? new Date(xc.billableDate).toLocaleDateString() : 'â€”'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                      {xc.year ? `${xc.year} Q${xc.quarter ?? 'â€”'}` : 'â€”'}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                      {xc.dateCompleted
+                        ? new Date(xc.dateCompleted).toLocaleDateString()
+                        : 'â€”'}
                     </td>
                   </tr>
                 ))}
@@ -200,7 +316,7 @@ export default async function SpReportsPage({
               <div className="flex gap-2">
                 {result.meta.page > 1 && (
                   <Link
-                    href={`?page=${result.meta.page - 1}&${exportQs}`}
+                    href={`?page=${result.meta.page - 1}&${pageQs}`}
                     className="rounded border px-3 py-1 hover:bg-gray-50"
                   >
                     Previous
@@ -208,7 +324,7 @@ export default async function SpReportsPage({
                 )}
                 {result.meta.page < result.meta.totalPages && (
                   <Link
-                    href={`?page=${result.meta.page + 1}&${exportQs}`}
+                    href={`?page=${result.meta.page + 1}&${pageQs}`}
                     className="rounded border px-3 py-1 hover:bg-gray-50"
                   >
                     Next
@@ -231,3 +347,4 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
     </div>
   );
 }
+

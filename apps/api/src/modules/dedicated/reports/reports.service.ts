@@ -70,9 +70,9 @@ export class ReportsService {
       where['orderingCompany'] = { contains: orderingCompany, mode: 'insensitive' };
     if (customerType) where['customerType'] = { contains: customerType, mode: 'insensitive' };
     if (dateFrom || dateTo) {
-      where['billableDate'] = {
+      where['dateCompleted'] = {
         ...(dateFrom ? { gte: new Date(dateFrom) } : {}),
-        ...(dateTo ? { lte: new Date(dateTo) } : {}),
+        ...(dateTo ? { lte: new Date(dateTo + 'T23:59:59.999Z') } : {}),
       };
     }
 
