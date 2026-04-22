@@ -1153,11 +1153,11 @@ async function main() {
 
   const spOrg = await prisma.organization.upsert({
     where: { code: 'SP-DEMO' },
-    update: {},
+    update: { orgType: OrgType.service_partner },
     create: {
       name: 'Demo Service Partner',
       code: 'SP-DEMO',
-      orgType: OrgType.customer,
+      orgType: OrgType.service_partner,
       isDedicated: true,
       dedicatedConfig: { notificationsEmail: 'sp-noc@sp-demo.example.com' },
       contactEmail: 'admin@sp-demo.example.com',
@@ -3164,6 +3164,624 @@ async function main() {
   }
   console.log(`  ✓ ${billingCount} new BillingTriggerEvent records seeded`);
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ADDITIONAL SERVICE PARTNER ORGS (data isolation demo)
+  // Each SP org has its own users, cross-connects, and tickets.
+  // The API filters all SP queries by actor.orgId so there is no data bleed.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── NetSync Solutions ─────────────────────────────────────────────────────
+
+  const netsyncOrg = await prisma.organization.upsert({
+    where: { code: 'NETSYNC' },
+    update: { orgType: OrgType.service_partner },
+    create: {
+      name: 'NetSync Solutions',
+      code: 'NETSYNC',
+      orgType: OrgType.service_partner,
+      isDedicated: true,
+      dedicatedConfig: { notificationsEmail: 'noc@netsync.example.com' },
+      contactEmail: 'admin@netsync.example.com',
+    },
+  });
+
+  const netsyncAdmin = await prisma.user.upsert({
+    where: { email: 'admin@netsync.example.com' },
+    update: {},
+    create: {
+      firstName: 'Alex',
+      lastName: 'Chen',
+      email: 'admin@netsync.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_admin,
+      orgId: netsyncOrg.id,
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: 'ops@netsync.example.com' },
+    update: {},
+    create: {
+      firstName: 'Sam',
+      lastName: 'Park',
+      email: 'ops@netsync.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_ops,
+      orgId: netsyncOrg.id,
+    },
+  });
+  console.log('  ✓ NetSync Solutions org + users');
+
+  // 167 DedicatedCrossConnect records for NetSync (all isolated to netsyncOrg)
+  {
+    const nsStatuses = [
+      'draft',
+      'submitted',
+      'in_progress',
+      'completed',
+      'disconnected',
+      'cancelled',
+    ] as const;
+    const nsCompanies = [
+      'Level 3',
+      'CenturyLink',
+      'Zayo',
+      'Windstream',
+      'Cogent',
+      'HE.net',
+      'Lumen',
+      'Brightspeed',
+    ];
+    const nsXcs: Prisma.DedicatedCrossConnectCreateManyInput[] = [];
+    for (let i = 0; i < 167; i++) {
+      const status = nsStatuses[i % nsStatuses.length];
+      const year = 2021 + (i % 5);
+      const quarter = (i % 4) + 1;
+      const hasMrc = status !== 'draft';
+      const isComplete = status === 'completed' || status === 'disconnected';
+      const month = String(Math.min(quarter * 3, 12)).padStart(2, '0');
+      nsXcs.push({
+        crossConnectId: `NETSYNC-XC-${String(i + 1).padStart(4, '0')}`,
+        organizationId: netsyncOrg.id,
+        createdById: netsyncAdmin.id,
+        status: status as any,
+        orderingCompany: nsCompanies[i % nsCompanies.length],
+        circuitId: `CKT-NS-${2000 + i}`,
+        cableType: i % 2 === 0 ? 'SMF' : 'MMF',
+        customerType: i % 3 === 0 ? 'enterprise' : i % 3 === 1 ? 'carrier' : 'cloud',
+        mrc: hasMrc ? new Prisma.Decimal(30000 + (i % 25) * 15000) : null,
+        nrc: hasMrc ? new Prisma.Decimal(80000 + (i % 10) * 20000) : null,
+        year,
+        quarter,
+        siteId: spDemoSite?.id ?? null,
+        dateCompleted: isComplete ? new Date(`${year}-${month}-10`) : null,
+        disconnectionDate: status === 'disconnected' ? new Date(`${year}-${month}-25`) : null,
+        aEndCampus: 'IAD-1',
+        aEndBuilding: 'Main',
+        aEndRoom: 'MMR-1',
+        aEndRack: `NS-R${String(Math.floor(i / 10) + 1).padStart(2, '0')}`,
+        aEndPort: String((i % 24) + 1).padStart(2, '0'),
+        zEndCampus: 'IAD-1',
+        zEndBuilding: 'Main',
+        zEndRoom: i % 2 === 0 ? 'TC-B1' : 'SUITE-4',
+        zEndRack: `Z-R${String(Math.floor(i / 12) + 1).padStart(2, '0')}`,
+        zEndPort: String((i % 48) + 1).padStart(2, '0'),
+      });
+    }
+    await prisma.dedicatedCrossConnect.createMany({ data: nsXcs, skipDuplicates: true });
+    console.log('  ✓ 167 DedicatedCrossConnect records for NetSync Solutions');
+  }
+
+  // 20 support tickets for NetSync (all isolated to netsyncOrg)
+  {
+    const nsTickets = [
+      {
+        subject: 'CKT-NS-2000 intermittent outage',
+        description:
+          'Circuit CKT-NS-2000 has been flapping every 2 hours since last night. Each flap lasts 30–90 seconds. No changes made on our side.',
+        category: 'issue',
+        priority: 'high',
+        status: 'open',
+      },
+      {
+        subject: 'Billing dispute — Q2 invoice overcharge',
+        description:
+          'Q2 invoice shows NRC for 3 circuits that were already paid in Q1. Total overcharge approx $4,500. Please review and issue credit.',
+        category: 'billing',
+        priority: 'medium',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Request new 10G SMF cross-connect feasibility',
+        description:
+          'Planning to add a 10G SMF cross-connect from cage NS-R01 to carrier Level 3 demarc. Please advise on port availability and lead time.',
+        category: 'suggestion',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'CKT-NS-2015 complete outage — critical',
+        description:
+          'CKT-NS-2015 completely down since 14:00. Revenue-impacting. Technician dispatch required immediately.',
+        category: 'issue',
+        priority: 'critical',
+        status: 'resolved',
+        resolutionNote:
+          'Physical break in fiber tray. Repaired and circuit restored. Total outage 1h 45min.',
+      },
+      {
+        subject: 'OTDR documentation for CKT-NS-2030',
+        description:
+          'OTDR test report needed for internal compliance audit. Please provide end-to-end loss measurements.',
+        category: 'access',
+        priority: 'low',
+        status: 'closed',
+        resolutionNote: 'OTDR report emailed. Loss 0.4 dB end-to-end. Within spec.',
+      },
+      {
+        subject: 'LOA required for CKT-NS-2040 new carrier handoff',
+        description:
+          'Requesting LOA for new carrier handoff at MMR-1. Circuit CKT-NS-2040. Required for carrier provisioning team.',
+        category: 'access',
+        priority: 'medium',
+        status: 'resolved',
+        resolutionNote: 'LOA-NETSYNC-0042 issued and emailed to admin@netsync.example.com.',
+      },
+      {
+        subject: 'CKT-NS-2050 high BER after maintenance window',
+        description:
+          'BER on CKT-NS-2050 elevated to 1e-8 after last maintenance window. Specification requires <1e-12. Investigation needed.',
+        category: 'issue',
+        priority: 'high',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Incorrect MRC on 5 circuits',
+        description:
+          'Five circuits (CKT-NS-2060 through 2064) show MRC 15% above contracted rate. Please review billing records against MSA Exhibit B.',
+        category: 'billing',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'Emergency cage access — transceiver hardware swap',
+        description:
+          'Optical transceiver failed on CKT-NS-2060. Need escort to rack NS-R06 for hardware swap. Can arrange within 4 hours.',
+        category: 'access',
+        priority: 'high',
+        status: 'resolved',
+        resolutionNote: 'Access granted. Hardware swapped successfully. Circuit restored.',
+      },
+      {
+        subject: 'Port utilization report H1 2025',
+        description:
+          'Requesting H1 2025 utilization and availability report for all 167 NetSync circuits. Excel format preferred.',
+        category: 'other',
+        priority: 'low',
+        status: 'resolved',
+        resolutionNote: 'Report emailed to admin@netsync.example.com. Average utilization 72%.',
+      },
+      {
+        subject: 'CKT-NS-2080 packet loss 3% downstream',
+        description:
+          'Downstream packet loss of 3% on CKT-NS-2080 for the past 8 hours. Upstream clean. Suspected issue at our ODF/amplifier stage.',
+        category: 'issue',
+        priority: 'high',
+        status: 'open',
+      },
+      {
+        subject: '100G DWDM wavelength feasibility request',
+        description:
+          'Requesting feasibility assessment for 100G DWDM wavelength between NS-R03 and carrier Zayo demarc. Planning Q3 2026 upgrade.',
+        category: 'suggestion',
+        priority: 'medium',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Update billing contact email address',
+        description:
+          'Please change billing email from old-finance@netsync.example.com to billing@netsync.example.com effective immediately.',
+        category: 'billing',
+        priority: 'low',
+        status: 'closed',
+        resolutionNote: 'Billing contact updated. Next invoice will go to new address.',
+      },
+      {
+        subject: 'CKT-NS-2100 noise floor increase 4 dB',
+        description:
+          'Noise floor on CKT-NS-2100 has increased by 4 dB over the past month. Currently within threshold but proactive investigation requested.',
+        category: 'issue',
+        priority: 'medium',
+        status: 'in_progress',
+      },
+      {
+        subject: 'SLA compliance report Q1 2026',
+        description:
+          'Requesting Q1 2026 SLA compliance report for all active circuits under our agreement.',
+        category: 'other',
+        priority: 'low',
+        status: 'resolved',
+        resolutionNote:
+          'Q1 2026 report attached. Overall availability 99.96%. No SLA credits triggered.',
+      },
+      {
+        subject: 'CKT-NS-2110 wavelength mismatch post-grooming',
+        description:
+          'CKT-NS-2110 ended up on incorrect wavelength after network grooming event. Cannot lock at transponder. Urgent correction needed.',
+        category: 'issue',
+        priority: 'high',
+        status: 'resolved',
+        resolutionNote:
+          'Wavelength reassigned to original channel 28 (1554.13nm). Circuit verified error-free.',
+      },
+      {
+        subject: 'Add new sp_ops user to portal',
+        description:
+          'Requesting creation of sp_ops portal account for new NOC engineer: noc2@netsync.example.com.',
+        category: 'access',
+        priority: 'low',
+        status: 'closed',
+        resolutionNote: 'User account created for noc2@netsync.example.com. Welcome email sent.',
+      },
+      {
+        subject: 'CKT-NS-2120 CRC error storm escalation',
+        description:
+          'CKT-NS-2120 generating 8,000 CRC errors per minute. Downstream customers affected. Require executive escalation.',
+        category: 'issue',
+        priority: 'critical',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Q2 2026 quarterly business review scheduling',
+        description:
+          'Requesting Q2 2026 QBR meeting with technical and commercial teams in the first week of May.',
+        category: 'other',
+        priority: 'low',
+        status: 'open',
+      },
+      {
+        subject: 'Contract renewal pricing inquiry',
+        description:
+          'Our MSA expires 2027-03-31. We would like to begin early renewal discussions and understand pricing for our current portfolio of 167 circuits.',
+        category: 'billing',
+        priority: 'medium',
+        status: 'open',
+      },
+    ];
+
+    for (const t of nsTickets) {
+      const exists = await prisma.supportTicket.findFirst({
+        where: { subject: t.subject, organizationId: netsyncOrg.id },
+      });
+      if (!exists) {
+        const counter = await prisma.ticketCounter.update({
+          where: { id: 1 },
+          data: { lastUsed: { increment: 1 } },
+        });
+        await prisma.supportTicket.create({
+          data: {
+            ticketNumber: `SP${String(counter.lastUsed).padStart(6, '0')}`,
+            portal: 'sp',
+            organizationId: netsyncOrg.id,
+            createdById: netsyncAdmin.id,
+            subject: t.subject,
+            description: t.description,
+            category: t.category as any,
+            priority: t.priority as any,
+            status: t.status as any,
+            ...(t.resolutionNote ? { resolutionNote: t.resolutionNote } : {}),
+          },
+        });
+      }
+    }
+    console.log('  ✓ 20 SupportTicket records for NetSync Solutions');
+  }
+
+  // ── FiberPlex Partners ────────────────────────────────────────────────────
+
+  const fiberplexOrg = await prisma.organization.upsert({
+    where: { code: 'FIBERPLEX' },
+    update: { orgType: OrgType.service_partner },
+    create: {
+      name: 'FiberPlex Partners',
+      code: 'FIBERPLEX',
+      orgType: OrgType.service_partner,
+      isDedicated: true,
+      dedicatedConfig: { notificationsEmail: 'noc@fiberplex.example.com' },
+      contactEmail: 'admin@fiberplex.example.com',
+    },
+  });
+
+  const fiberplexAdmin = await prisma.user.upsert({
+    where: { email: 'admin@fiberplex.example.com' },
+    update: {},
+    create: {
+      firstName: 'Jordan',
+      lastName: 'Reed',
+      email: 'admin@fiberplex.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_admin,
+      orgId: fiberplexOrg.id,
+    },
+  });
+  await prisma.user.upsert({
+    where: { email: 'ops@fiberplex.example.com' },
+    update: {},
+    create: {
+      firstName: 'Taylor',
+      lastName: 'Morgan',
+      email: 'ops@fiberplex.example.com',
+      passwordHash: HASH,
+      role: UserRole.sp_ops,
+      orgId: fiberplexOrg.id,
+    },
+  });
+  console.log('  ✓ FiberPlex Partners org + users');
+
+  // 167 DedicatedCrossConnect records for FiberPlex (all isolated to fiberplexOrg)
+  {
+    const fpStatuses = [
+      'draft',
+      'submitted',
+      'in_progress',
+      'completed',
+      'disconnected',
+      'cancelled',
+    ] as const;
+    const fpCompanies = [
+      'Verizon',
+      'AT&T Business',
+      'Sprint',
+      'T-Mobile',
+      'Crown Castle',
+      'Uniti Fiber',
+      'Consolidated',
+      'Frontier',
+    ];
+    const fpXcs: Prisma.DedicatedCrossConnectCreateManyInput[] = [];
+    for (let i = 0; i < 167; i++) {
+      const status = fpStatuses[i % fpStatuses.length];
+      const year = 2020 + (i % 6);
+      const quarter = (i % 4) + 1;
+      const hasMrc = status !== 'draft';
+      const isComplete = status === 'completed' || status === 'disconnected';
+      const month = String(Math.min(quarter * 3, 12)).padStart(2, '0');
+      fpXcs.push({
+        crossConnectId: `FIBERPLEX-XC-${String(i + 1).padStart(4, '0')}`,
+        organizationId: fiberplexOrg.id,
+        createdById: fiberplexAdmin.id,
+        status: status as any,
+        orderingCompany: fpCompanies[i % fpCompanies.length],
+        circuitId: `CKT-FP-${3000 + i}`,
+        cableType: i % 3 === 0 ? 'MMF' : 'SMF',
+        customerType: i % 2 === 0 ? 'enterprise' : 'carrier',
+        mrc: hasMrc ? new Prisma.Decimal(20000 + (i % 30) * 10000) : null,
+        nrc: hasMrc ? new Prisma.Decimal(60000 + (i % 12) * 25000) : null,
+        year,
+        quarter,
+        siteId: spDemoSite?.id ?? null,
+        dateCompleted: isComplete ? new Date(`${year}-${month}-12`) : null,
+        disconnectionDate: status === 'disconnected' ? new Date(`${year}-${month}-27`) : null,
+        aEndCampus: 'IAD-1',
+        aEndBuilding: 'Main',
+        aEndRoom: 'MMR-1',
+        aEndRack: `FP-R${String(Math.floor(i / 8) + 1).padStart(2, '0')}`,
+        aEndPort: String((i % 24) + 1).padStart(2, '0'),
+        zEndCampus: 'IAD-1',
+        zEndBuilding: 'Main',
+        zEndRoom: i % 3 === 0 ? 'TC-B1' : i % 3 === 1 ? 'SUITE-7' : 'SUITE-4',
+        zEndRack: `ZFP-R${String(Math.floor(i / 16) + 1).padStart(2, '0')}`,
+        zEndPort: String((i % 48) + 1).padStart(2, '0'),
+      });
+    }
+    await prisma.dedicatedCrossConnect.createMany({ data: fpXcs, skipDuplicates: true });
+    console.log('  ✓ 167 DedicatedCrossConnect records for FiberPlex Partners');
+  }
+
+  // 20 support tickets for FiberPlex (all isolated to fiberplexOrg)
+  {
+    const fpTickets = [
+      {
+        subject: 'CKT-FP-3000 complete outage — urgent',
+        description:
+          'CKT-FP-3000 completely down since 06:15 JST. This is the primary uplink for 4 enterprise customers. Immediate technician dispatch required.',
+        category: 'issue',
+        priority: 'critical',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Q1 2026 invoice missing 12 circuits',
+        description:
+          'Q1 invoice lists only 155 circuits but we have 167 active. 12 circuits are absent from the statement. Please identify and reissue.',
+        category: 'billing',
+        priority: 'high',
+        status: 'open',
+      },
+      {
+        subject: 'OTDR tests required for CKT-FP-3150 to 3166',
+        description:
+          'Batch OTDR tests needed for 17 recently provisioned circuits before customer acceptance sign-off. Requesting coordinated test window.',
+        category: 'access',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'CKT-FP-3020 receive power degrading trend',
+        description:
+          'Receive power on CKT-FP-3020 has declined 2 dB over the past month. Currently within threshold but trending toward alarm level.',
+        category: 'issue',
+        priority: 'medium',
+        status: 'in_progress',
+      },
+      {
+        subject: 'LOA renewal for Verizon handoff circuits',
+        description:
+          'LOAs for CKT-FP-3005 through CKT-FP-3009 expire in 30 days. Please initiate renewal process to avoid carrier provisioning disruption.',
+        category: 'access',
+        priority: 'medium',
+        status: 'resolved',
+        resolutionNote:
+          'LOAs renewed. References LOA-FP-2026-0100 through 0104. Valid for 24 months.',
+      },
+      {
+        subject: 'Bulk disconnect order — CKT-FP-3040 to 3047',
+        description:
+          'Requesting formal disconnection of circuits CKT-FP-3040 through CKT-FP-3047 by end of Q2 2026. Please confirm notice period and any early termination fees.',
+        category: 'other',
+        priority: 'medium',
+        status: 'in_progress',
+      },
+      {
+        subject: 'CKT-FP-3055 jitter spike after network grooming',
+        description:
+          'CKT-FP-3055 showing 12ms average jitter after latest network grooming event. Specification requires <2ms. Revenue impacting.',
+        category: 'issue',
+        priority: 'high',
+        status: 'resolved',
+        resolutionNote:
+          'Route restored to original pre-grooming path. Jitter normalized to 0.8ms. Confirmed stable.',
+      },
+      {
+        subject: 'NRC waiver request — early renewal batch of 22 circuits',
+        description:
+          'We are renewing 22 circuits 4 months ahead of their term. Per MSA section 5.1, we request NRC waiver for early renewal. Please confirm applicable credits.',
+        category: 'billing',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'Emergency: CKT-FP-3080 and 3081 both down simultaneously',
+        description:
+          'Primary AND diverse path both completely down simultaneously. Enterprise customer fully offline. Common-mode failure suspected. Immediate escalation.',
+        category: 'issue',
+        priority: 'critical',
+        status: 'resolved',
+        resolutionNote:
+          'Common-mode failure traced to shared conduit damage. Both circuits restored after cable replacement. RCA report to follow within 5 business days.',
+      },
+      {
+        subject: 'Physical cage access — ODF replacement in FP-R04',
+        description:
+          'Requesting escort for 2 engineers to replace ODF in rack FP-R04 on 2026-05-06. Work window 09:00–12:00 JST. No circuit outages anticipated.',
+        category: 'access',
+        priority: 'medium',
+        status: 'resolved',
+        resolutionNote:
+          'Access confirmed for 2026-05-06 09:00–12:00 JST. Escort arranged. Confirmation sent.',
+      },
+      {
+        subject: 'CKT-FP-3100 CRC error storm',
+        description:
+          'CKT-FP-3100 generating approximately 15,000 CRC errors per minute. Multiple downstream services impacted. Urgent investigation required.',
+        category: 'issue',
+        priority: 'critical',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Capacity planning review for H2 2026 growth',
+        description:
+          'FiberPlex is targeting +40 new circuits in H2 2026. Requesting formal capacity planning session with your engineering team.',
+        category: 'suggestion',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'Update billing address for new registered office',
+        description:
+          'New billing address: FiberPlex Partners LLC, Suite 400, 2050 Main St, Reston VA 20191. Please update effective immediately.',
+        category: 'billing',
+        priority: 'low',
+        status: 'closed',
+        resolutionNote: 'Billing address updated in CRM. Next invoice will use new address.',
+      },
+      {
+        subject: 'CKT-FP-3110 asymmetric latency investigation',
+        description:
+          'CKT-FP-3110 showing 3ms eastbound / 11ms westbound latency. No change on our end. Possible routing asymmetry in your network.',
+        category: 'issue',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'SLA compliance report February–March 2026',
+        description:
+          'Requesting circuit-level availability statistics for February and March 2026 for all active FiberPlex circuits.',
+        category: 'other',
+        priority: 'low',
+        status: 'resolved',
+        resolutionNote:
+          'Report emailed to admin@fiberplex.example.com. Feb: 99.98%, Mar: 99.94%. No credits triggered.',
+      },
+      {
+        subject: 'Second PoP feasibility — 12 new SMF cross-connects',
+        description:
+          'Evaluating establishing a second PoP in SUITE-7. Need cost and feasibility assessment for 12 new 1G and 10G SMF cross-connects.',
+        category: 'suggestion',
+        priority: 'medium',
+        status: 'in_progress',
+      },
+      {
+        subject: 'Add sp_viewer account for external auditor',
+        description:
+          'Please create sp_viewer portal account for our external compliance auditor: auditor@fiberplex.example.com. Read-only access only.',
+        category: 'access',
+        priority: 'low',
+        status: 'closed',
+        resolutionNote: 'sp_viewer account created for auditor@fiberplex.example.com.',
+      },
+      {
+        subject: 'CKT-FP-3130 receive power below alarm threshold',
+        description:
+          'Receive power on CKT-FP-3130 is currently -22 dBm, below the -20 dBm alarm threshold. Requires immediate inspection at your ODF.',
+        category: 'issue',
+        priority: 'high',
+        status: 'open',
+      },
+      {
+        subject: 'Contract amendment — upgrade 5 circuits from 1G to 10G',
+        description:
+          'Requesting contract amendment to upgrade CKT-FP-3140 through CKT-FP-3144 from 1G to 10G. Please provide new pricing and lead time.',
+        category: 'billing',
+        priority: 'medium',
+        status: 'open',
+      },
+      {
+        subject: 'Portal feature request — bulk CSV export for CMDB',
+        description:
+          'Our CMDB integration requires a bulk CSV export of all circuit statuses. The portal currently lacks this feature. Please consider adding it.',
+        category: 'suggestion',
+        priority: 'low',
+        status: 'open',
+      },
+    ];
+
+    for (const t of fpTickets) {
+      const exists = await prisma.supportTicket.findFirst({
+        where: { subject: t.subject, organizationId: fiberplexOrg.id },
+      });
+      if (!exists) {
+        const counter = await prisma.ticketCounter.update({
+          where: { id: 1 },
+          data: { lastUsed: { increment: 1 } },
+        });
+        await prisma.supportTicket.create({
+          data: {
+            ticketNumber: `SP${String(counter.lastUsed).padStart(6, '0')}`,
+            portal: 'sp',
+            organizationId: fiberplexOrg.id,
+            createdById: fiberplexAdmin.id,
+            subject: t.subject,
+            description: t.description,
+            category: t.category as any,
+            priority: t.priority as any,
+            status: t.status as any,
+            ...(t.resolutionNote ? { resolutionNote: t.resolutionNote } : {}),
+          },
+        });
+      }
+    }
+    console.log('  ✓ 20 SupportTicket records for FiberPlex Partners');
+  }
+
   console.log(`
 ✅  Seed complete!
 
@@ -3176,10 +3794,16 @@ Demo credentials  (password: changeme123!)
   dave@acme.example.com         customer_viewer (Acme Corp)
   carol@globex.example.com      customer_admin  (Globex Industries)
   customer@acme.example         customer_admin  (legacy alias)
-  sp-admin@sp-demo.example.com  sp_admin        (Demo Service Partner)
+
+  SP orgs (service_partner — data fully isolated per org):
+  sp-admin@sp-demo.example.com  sp_admin        (Demo Service Partner — 500+ XCs, 65 tickets)
   sp-ops@sp-demo.example.com    sp_ops          (Demo Service Partner)
   sp-viewer@sp-demo.example.com sp_viewer       (Demo Service Partner)
   sp-report@sp-demo.example.com sp_report       (Demo Service Partner)
+  admin@netsync.example.com     sp_admin        (NetSync Solutions — 167 XCs, 20 tickets)
+  ops@netsync.example.com       sp_ops          (NetSync Solutions)
+  admin@fiberplex.example.com   sp_admin        (FiberPlex Partners — 167 XCs, 20 tickets)
+  ops@fiberplex.example.com     sp_ops          (FiberPlex Partners)
 
 Orders:
   XCO-DEMO-001  draft
