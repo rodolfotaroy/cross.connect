@@ -73,7 +73,7 @@ services:
       S3_BUCKET: cross-connect-docs
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin
-      CORS_ORIGINS: https://172.16.100.69
+      CORS_ORIGINS: https://172.16.100.69,https://219.117.219.61
       JOBS_SCHEMA: xc_jobs
       THROTTLE_TTL_SECONDS: 60
       THROTTLE_LIMIT: 500
@@ -93,9 +93,9 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        # Baked into the JS bundle at build time — must match the host port
-        # that the user's browser uses to reach the API.
-        NEXT_PUBLIC_API_URL: https://172.16.100.69
+        # Empty string → client-side fetch uses relative paths (/api/v1/...)
+        # which nginx proxies to the API container. Works on any host IP.
+        NEXT_PUBLIC_API_URL: ''
     restart: unless-stopped
     depends_on:
       api:
