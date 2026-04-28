@@ -100,10 +100,7 @@ export default async function SpReportsPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Reports"
-        subtitle="Cross-connect financial reporting &amp; analytics"
-      />
+      <PageHeader title="Reports" subtitle="Cross-connect financial reporting &amp; analytics" />
 
       {/* KPI Cards */}
       {summary && (

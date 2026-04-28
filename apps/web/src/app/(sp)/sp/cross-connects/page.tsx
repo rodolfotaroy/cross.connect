@@ -8,10 +8,21 @@ import Link from 'next/link';
 
 export const metadata: Metadata = { title: 'Cross Connects — SP Portal' };
 
+const COLUMNS: { label: string; field: string | null }[] = [
+  { label: 'XC ID', field: 'crossConnectId' },
+  { label: 'Circuit ID', field: 'circuitId' },
+  { label: 'Status', field: 'status' },
+  { label: 'Ordering Company', field: 'orderingCompany' },
+  { label: 'Site', field: null },
+  { label: 'MRC', field: 'mrc' },
+  { label: 'NRC', field: 'nrc' },
+  { label: 'Date Completed', field: 'dateCompleted' },
+];
+
 export default async function SpCrossConnectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; q?: string; sortBy?: string; sortDir?: string }>;
 }) {
   const sp = await searchParams;
   const session = await auth();
@@ -20,8 +31,17 @@ export default async function SpCrossConnectsPage({
   const canWrite = role === 'super_admin' || role === 'sp_admin' || role === 'sp_ops';
 
   const page = Number(sp.page ?? '1');
+  const sortBy = sp.sortBy ?? 'createdAt';
+  const sortDir = (sp.sortDir === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc';
+
+  const sharedQs = new URLSearchParams();
+  if (sp.status) sharedQs.set('status', sp.status);
+  if (sp.q) sharedQs.set('q', sp.q);
+  if (sp.sortBy) sharedQs.set('sortBy', sp.sortBy);
+  if (sp.sortDir) sharedQs.set('sortDir', sp.sortDir);
+
   const result = await dedicatedXcApi
-    .list(token, { page, limit: 25, status: sp.status as any, q: sp.q })
+    .list(token, { page, limit: 25, status: sp.status as any, q: sp.q, ...(({ sortBy, sortDir } as any)) })
     .catch(() => ({ data: [], meta: { page: 1, limit: 25, total: 0, totalPages: 0 } }));
 
   return (
@@ -90,24 +110,41 @@ export default async function SpCrossConnectsPage({
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {[
-                    'XC ID',
-                    'Circuit ID',
-                    'Status',
-                    'Ordering Company',
-                    'Site',
-                    'MRC',
-                    'NRC',
-                    'Date Completed',
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {COLUMNS.map(({ label, field }) => {
+                    if (!field) {
+                      return (
+                        <th
+                          key={label}
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                        >
+                          {label}
+                        </th>
+                      );
+                    }
+                    const isActive = sortBy === field;
+                    const nextDir = isActive && sortDir === 'asc' ? 'desc' : 'asc';
+                    const colQs = new URLSearchParams(sharedQs);
+                    colQs.set('sortBy', field);
+                    colQs.set('sortDir', nextDir);
+                    return (
+                      <th
+                        key={label}
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                      >
+                        <Link
+                          href={`?${colQs.toString()}`}
+                          className="group inline-flex items-center gap-1 hover:text-gray-900"
+                        >
+                          {label}
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                            {isActive ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                          </span>
+                        </Link>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -155,7 +192,7 @@ export default async function SpCrossConnectsPage({
               <div className="flex gap-2">
                 {result.meta.page > 1 && (
                   <Link
-                    href={`?page=${result.meta.page - 1}${sp.status ? `&status=${sp.status}` : ''}${sp.q ? `&q=${sp.q}` : ''}`}
+                    href={`?${new URLSearchParams({ ...Object.fromEntries(sharedQs), page: String(result.meta.page - 1) })}`}
                     className="rounded border px-3 py-1 hover:bg-gray-50"
                   >
                     Previous
@@ -163,7 +200,7 @@ export default async function SpCrossConnectsPage({
                 )}
                 {result.meta.page < result.meta.totalPages && (
                   <Link
-                    href={`?page=${result.meta.page + 1}${sp.status ? `&status=${sp.status}` : ''}${sp.q ? `&q=${sp.q}` : ''}`}
+                    href={`?${new URLSearchParams({ ...Object.fromEntries(sharedQs), page: String(result.meta.page + 1) })}`}
                     className="rounded border px-3 py-1 hover:bg-gray-50"
                   >
                     Next

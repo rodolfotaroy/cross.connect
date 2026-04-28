@@ -171,14 +171,26 @@ export function EditCrossConnectForm({ xc }: { xc: DedicatedXcDto }) {
                   </button>
                 </div>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <HopField label="Room" value={hop.room} onChange={(v) => updateHop(i, 'room', v)} />
-                  <HopField label="Rack" value={hop.rack} onChange={(v) => updateHop(i, 'rack', v)} />
+                  <HopField
+                    label="Room"
+                    value={hop.room}
+                    onChange={(v) => updateHop(i, 'room', v)}
+                  />
+                  <HopField
+                    label="Rack"
+                    value={hop.rack}
+                    onChange={(v) => updateHop(i, 'rack', v)}
+                  />
                   <HopField
                     label="Rack Unit"
                     value={hop.device}
                     onChange={(v) => updateHop(i, 'device', v)}
                   />
-                  <HopField label="Port" value={hop.port} onChange={(v) => updateHop(i, 'port', v)} />
+                  <HopField
+                    label="Port"
+                    value={hop.port}
+                    onChange={(v) => updateHop(i, 'port', v)}
+                  />
                 </div>
               </div>
             ))}

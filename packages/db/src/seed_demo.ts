@@ -430,7 +430,9 @@ async function main() {
       salesSource: pick(SALES_SOURCES, i * 3) as string | null,
       cableType,
       customerType,
-      mrc: new Prisma.Decimal(pick([50_000, 75_000, 100_000, 150_000, 200_000, 300_000, 500_000, 800_000], i)),
+      mrc: new Prisma.Decimal(
+        pick([50_000, 75_000, 100_000, 150_000, 200_000, 300_000, 500_000, 800_000], i),
+      ),
       nrc: new Prisma.Decimal(pick([25_000, 50_000, 75_000, 100_000, 150_000, 200_000], i)),
       year: 2026,
       quarter: 1,
@@ -470,7 +472,9 @@ async function main() {
 
   const pmHopBatch: Prisma.DedicatedXcHopCreateManyInput[] = [];
   for (const xc of pmXcs) {
-    const existing = await prisma.dedicatedXcHop.count({ where: { dedicatedCrossConnectId: xc.id } });
+    const existing = await prisma.dedicatedXcHop.count({
+      where: { dedicatedCrossConnectId: xc.id },
+    });
     if (existing > 0) continue;
     const idx = parseInt(xc.crossConnectId.replace('DEMO-PM-', ''), 10) - 1;
     const hopCount = (idx % 2) + 1; // 1 or 2 hops
@@ -490,7 +494,6 @@ async function main() {
     await prisma.dedicatedXcHop.createMany({ data: pmHopBatch, skipDuplicates: true });
   }
   console.log(`  ✓ ${pmHopBatch.length} hops for previous-month XCs`);
-
 
   // ══════════════════════════════════════════════════════════════════════════
   // SUPPORT TICKETS (120 tickets)

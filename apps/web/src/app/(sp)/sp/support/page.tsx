@@ -78,10 +78,7 @@ export default async function SpSupportPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Support"
-        subtitle="Manage support tickets and contact information"
-      />
+      <PageHeader title="Support" subtitle="Manage support tickets and contact information" />
 
       {/* Contact Details */}
       {contact && (

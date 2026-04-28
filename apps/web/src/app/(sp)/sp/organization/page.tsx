@@ -9,7 +9,19 @@ import { DeactivateSpUserButton } from './deactivate-sp-user-button';
 
 export const metadata: Metadata = { title: 'Organization — SP Portal' };
 
-export default async function SpOrganizationPage() {
+const MEMBER_COLUMNS: { label: string; field: string | null }[] = [
+  { label: 'Name', field: 'lastName' },
+  { label: 'Email', field: 'email' },
+  { label: 'Role', field: 'role' },
+  { label: 'Status', field: 'isActive' },
+];
+
+export default async function SpOrganizationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sortBy?: string; sortDir?: string }>;
+}) {
+  const sp = await searchParams;
   const session = await auth();
   const token = (session?.user as any)?.accessToken as string;
   const currentUserId = (session?.user as any)?.id as string;
@@ -17,7 +29,20 @@ export default async function SpOrganizationPage() {
   const isSuperAdmin = role === 'super_admin';
   const orgName = (session?.user as any)?.orgName as string | undefined;
 
-  const users = await spTeamApi.list(token).catch(() => [] as any[]);
+  const sortBy = sp.sortBy ?? 'lastName';
+  const sortDir = sp.sortDir === 'asc' ? 'asc' : 'desc';
+
+  const rawUsers = await spTeamApi.list(token).catch(() => [] as any[]);
+
+  // Sort client-side since team API returns all records at once
+  const users = [...rawUsers].sort((a: any, b: any) => {
+    let aVal = a[sortBy] ?? '';
+    let bVal = b[sortBy] ?? '';
+    if (typeof aVal === 'boolean') aVal = aVal ? 1 : 0;
+    if (typeof bVal === 'boolean') bVal = bVal ? 1 : 0;
+    const cmp = String(aVal).localeCompare(String(bVal));
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
 
   return (
     <div className="space-y-6">
@@ -54,22 +79,38 @@ export default async function SpOrganizationPage() {
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    {[
-                      'Name',
-                      'Email',
-                      'Role',
-                      ...(isSuperAdmin ? ['Organization'] : []),
-                      'Status',
-                      'Actions',
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                      >
-                        {h}
-                      </th>
-                    ))}
+                    {[...MEMBER_COLUMNS, ...(isSuperAdmin ? [{ label: 'Organization', field: null }] : []), { label: 'Actions', field: null }].map(({ label, field }) => {
+                      if (!field) {
+                        return (
+                          <th
+                            key={label}
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                          >
+                            {label}
+                          </th>
+                        );
+                      }
+                      const isActive = sortBy === field;
+                      const nextDir = isActive && sortDir === 'asc' ? 'desc' : 'asc';
+                      return (
+                        <th
+                          key={label}
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                        >
+                          <Link
+                            href={`?sortBy=${field}&sortDir=${nextDir}`}
+                            className="group inline-flex items-center gap-1 hover:text-gray-900"
+                          >
+                            {label}
+                            <span className="text-gray-400 group-hover:text-gray-600">
+                              {isActive ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                            </span>
+                          </Link>
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">

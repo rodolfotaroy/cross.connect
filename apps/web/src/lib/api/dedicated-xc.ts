@@ -73,6 +73,8 @@ export const dedicatedXcApi = {
     if (params?.q) qs.set('q', params.q);
     if (params?.year) qs.set('year', String(params.year));
     if (params?.quarter) qs.set('quarter', String(params.quarter));
+    if ((params as any)?.sortBy) qs.set('sortBy', (params as any).sortBy);
+    if ((params as any)?.sortDir) qs.set('sortDir', (params as any).sortDir);
     const q = qs.toString();
     return apiClient.get<PaginatedXcResponse>(`/sp/cross-connects${q ? `?${q}` : ''}`, token);
   },
