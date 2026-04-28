@@ -399,6 +399,100 @@ async function main() {
   console.log(`  ✓ ${hopBatch.length} DedicatedXcHop records (1–4 hops per XC)`);
 
   // ══════════════════════════════════════════════════════════════════════════
+  // PREVIOUS-MONTH COMPLETED XCs (50 records)
+  // These are pinned to March 2026 (dateCompleted 2026-03-01 to 2026-03-31)
+  // so they appear when the "Previous month" quick-filter is clicked on the
+  // Reports page (status=completed + dateFrom=2026-03-01 + dateTo=2026-03-31).
+  // ══════════════════════════════════════════════════════════════════════════
+
+  console.log('  … Seeding 50 previous-month (March 2026) completed XCs…');
+
+  const prevMonthBatch: Prisma.DedicatedCrossConnectCreateManyInput[] = [];
+
+  for (let i = 0; i < 50; i++) {
+    const day = (i % 28) + 1; // days 1–28 spread evenly across March
+    const dateCompleted = new Date(`2026-03-${String(day).padStart(2, '0')}`);
+    const billableDate = new Date('2026-03-01');
+    const company = pick(ORDERING_COMPANIES, i * 7 + 3);
+    const cableType = pick(CABLE_TYPES, i * 2 + 1);
+    const customerType = pick(CUSTOMER_TYPES, i * 3);
+    const aEndCampus = pick(CAMPUSES, i + 1);
+    const zEndCampus = pick(CAMPUSES, i + 4);
+
+    prevMonthBatch.push({
+      crossConnectId: `DEMO-PM-${String(i + 1).padStart(4, '0')}`,
+      organizationId: demoOrg.id,
+      createdById: i % 2 === 0 ? demoAdmin.id : demoAdmin2.id,
+      status: DedicatedXcStatus.completed,
+      orderingCompany: company,
+      circuitId: `CKT-PM-${String(2000 + i).padStart(5, '0')}`,
+      ticketNumber: i % 4 === 0 ? `TKT-PM-${String(i + 1).padStart(4, '0')}` : null,
+      salesSource: pick(SALES_SOURCES, i * 3) as string | null,
+      cableType,
+      customerType,
+      mrc: new Prisma.Decimal(pick([50_000, 75_000, 100_000, 150_000, 200_000, 300_000, 500_000, 800_000], i)),
+      nrc: new Prisma.Decimal(pick([25_000, 50_000, 75_000, 100_000, 150_000, 200_000], i)),
+      year: 2026,
+      quarter: 1,
+      siteId: site?.id ?? null,
+      dateCompleted,
+      billableDate,
+      disconnectionDate: null,
+      requestedDisconnectionDate: null,
+      testReport: i % 3 === 0 ? `OTDR-2026-PM-${String(i + 1).padStart(4, '0')}` : null,
+      aEndCampus,
+      aEndBuilding: pick(BUILDINGS, i + 1),
+      aEndFloor: pick(FLOORS, i),
+      aEndRoom: pick(ROOMS, i),
+      aEndRack: `A-R${String((Math.floor(i / 8) % 32) + 1).padStart(2, '0')}`,
+      aEndDevice: `DEMO-ODF-PM-${String((i % 20) + 1).padStart(2, '0')}`,
+      aEndPort: String((i % 48) + 1).padStart(2, '0'),
+      zEndCampus,
+      zEndBuilding: pick(BUILDINGS, i + 2),
+      zEndFloor: pick(FLOORS, i + 1),
+      zEndRoom: pick(ROOMS, i + 5),
+      zEndRack: `Z-R${String((Math.floor(i / 6) % 32) + 1).padStart(2, '0')}`,
+      zEndDevice: `DEMO-PP-PM-${String((i % 20) + 1).padStart(2, '0')}`,
+      zEndPort: String(((i + 12) % 48) + 1).padStart(2, '0'),
+      notes: `Previous-month demo record ${i + 1}. Completed 2026-03-${String(day).padStart(2, '0')}. ${company}.`,
+    });
+  }
+
+  await prisma.dedicatedCrossConnect.createMany({ data: prevMonthBatch, skipDuplicates: true });
+  console.log('  ✓ 50 previous-month (March 2026) completed XCs');
+
+  // Add 1-2 hops to each previous-month XC
+  const pmXcs = await prisma.dedicatedCrossConnect.findMany({
+    where: { organizationId: demoOrg.id, crossConnectId: { startsWith: 'DEMO-PM-' } },
+    select: { id: true, crossConnectId: true },
+    orderBy: { crossConnectId: 'asc' },
+  });
+
+  const pmHopBatch: Prisma.DedicatedXcHopCreateManyInput[] = [];
+  for (const xc of pmXcs) {
+    const existing = await prisma.dedicatedXcHop.count({ where: { dedicatedCrossConnectId: xc.id } });
+    if (existing > 0) continue;
+    const idx = parseInt(xc.crossConnectId.replace('DEMO-PM-', ''), 10) - 1;
+    const hopCount = (idx % 2) + 1; // 1 or 2 hops
+    for (let h = 1; h <= hopCount; h++) {
+      pmHopBatch.push({
+        dedicatedCrossConnectId: xc.id,
+        hopNumber: h,
+        room: pick(ROOMS, idx + h + 2),
+        rack: `R${String(((idx + h + 5) % 20) + 1).padStart(2, '0')}`,
+        device: `PATCH-PM-${String(((idx * 3 + h) % 48) + 1).padStart(2, '0')}`,
+        port: String(((idx + h * 5) % 48) + 1).padStart(2, '0'),
+      });
+    }
+  }
+
+  if (pmHopBatch.length > 0) {
+    await prisma.dedicatedXcHop.createMany({ data: pmHopBatch, skipDuplicates: true });
+  }
+  console.log(`  ✓ ${pmHopBatch.length} hops for previous-month XCs`);
+
+
+  // ══════════════════════════════════════════════════════════════════════════
   // SUPPORT TICKETS (120 tickets)
   // Shows: all 4 priorities, all 4 statuses, all 5 categories
   // Portal: 'sp' (service-partner portal)
