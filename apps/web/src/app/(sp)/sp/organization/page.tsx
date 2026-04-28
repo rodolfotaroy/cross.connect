@@ -79,7 +79,11 @@ export default async function SpOrganizationPage({
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
-                    {[...MEMBER_COLUMNS, ...(isSuperAdmin ? [{ label: 'Organization', field: null }] : []), { label: 'Actions', field: null }].map(({ label, field }) => {
+                    {[
+                      ...MEMBER_COLUMNS,
+                      ...(isSuperAdmin ? [{ label: 'Organization', field: null }] : []),
+                      { label: 'Actions', field: null },
+                    ].map(({ label, field }) => {
                       if (!field) {
                         return (
                           <th
@@ -101,11 +105,11 @@ export default async function SpOrganizationPage({
                         >
                           <Link
                             href={`?sortBy=${field}&sortDir=${nextDir}`}
-                            className="group inline-flex items-center gap-1 hover:text-gray-900"
+                            className="inline-flex items-center gap-1 hover:text-gray-800"
                           >
                             {label}
-                            <span className="text-gray-400 group-hover:text-gray-600">
-                              {isActive ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                            <span className="text-gray-400">
+                              {isActive ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
                             </span>
                           </Link>
                         </th>

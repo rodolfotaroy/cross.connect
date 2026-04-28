@@ -22,7 +22,13 @@ const COLUMNS: { label: string; field: string | null }[] = [
 export default async function SpCrossConnectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string; q?: string; sortBy?: string; sortDir?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    status?: string;
+    q?: string;
+    sortBy?: string;
+    sortDir?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const session = await auth();
@@ -41,7 +47,13 @@ export default async function SpCrossConnectsPage({
   if (sp.sortDir) sharedQs.set('sortDir', sp.sortDir);
 
   const result = await dedicatedXcApi
-    .list(token, { page, limit: 25, status: sp.status as any, q: sp.q, ...(({ sortBy, sortDir } as any)) })
+    .list(token, {
+      page,
+      limit: 25,
+      status: sp.status as any,
+      q: sp.q,
+      ...({ sortBy, sortDir } as any),
+    })
     .catch(() => ({ data: [], meta: { page: 1, limit: 25, total: 0, totalPages: 0 } }));
 
   return (
@@ -135,11 +147,11 @@ export default async function SpCrossConnectsPage({
                       >
                         <Link
                           href={`?${colQs.toString()}`}
-                          className="group inline-flex items-center gap-1 hover:text-gray-900"
+                          className="inline-flex items-center gap-1 hover:text-gray-800"
                         >
                           {label}
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                            {isActive ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+                          <span className="text-gray-400">
+                            {isActive ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
                           </span>
                         </Link>
                       </th>
