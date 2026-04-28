@@ -90,12 +90,6 @@ export default async function SpDashboard() {
               {formatCurrency(Number(summary.totalMrc))}
             </p>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <p className="text-sm font-medium text-gray-500">Total NRC</p>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">
-              {formatCurrency(Number(summary.totalNrc))}
-            </p>
-          </div>
         </div>
       )}
 

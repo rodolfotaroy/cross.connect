@@ -20,6 +20,8 @@ export interface UpdateOrganizationInput {
   contactEmail?: string;
   contactPhone?: string;
   notes?: string;
+  freeNrc?: boolean;
+  freeMrc?: boolean;
 }
 
 export interface CreateUserInput {

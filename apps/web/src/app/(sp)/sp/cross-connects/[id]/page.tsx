@@ -101,7 +101,7 @@ export default async function XcDetailPage({ params }: { params: Promise<{ id: s
                 <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {hop.room && <Detail label="Room" value={hop.room} />}
                   {hop.rack && <Detail label="Rack" value={hop.rack} />}
-                  {hop.device && <Detail label="Device" value={hop.device} />}
+                  {hop.device && <Detail label="Rack Unit" value={hop.device} />}
                   {hop.port && <Detail label="Port" value={hop.port} />}
                 </dl>
               </div>

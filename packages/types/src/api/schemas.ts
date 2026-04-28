@@ -102,6 +102,8 @@ export const CreateOrganizationSchema = z.object({
   contactEmail: z.string().email().optional(),
   contactPhone: z.string().max(30).optional(),
   notes: z.string().max(1000).optional(),
+  freeNrc: z.boolean().optional(), // stored inside dedicatedConfig JSON
+  freeMrc: z.boolean().optional(), // stored inside dedicatedConfig JSON
 });
 export type CreateOrganizationInput = z.infer<typeof CreateOrganizationSchema>;
 

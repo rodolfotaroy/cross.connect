@@ -1,5 +1,12 @@
 import type { OrgType, UserRole } from '../enums';
 
+export interface DedicatedConfig {
+  freeNrc?: boolean;
+  freeMrc?: boolean;
+  notificationsEmail?: string;
+  [key: string]: unknown;
+}
+
 export interface OrganizationDto {
   id: string;
   name: string;
@@ -9,6 +16,8 @@ export interface OrganizationDto {
   contactPhone: string | null;
   notes: string | null;
   isActive: boolean;
+  isDedicated: boolean;
+  dedicatedConfig: DedicatedConfig | null;
   createdAt: string;
   updatedAt: string;
 }

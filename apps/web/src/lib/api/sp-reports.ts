@@ -31,6 +31,8 @@ export const spReportsApi = {
     if (params?.dateTo) qs.set('dateTo', params.dateTo);
     if (params?.orderingCompany) qs.set('orderingCompany', params.orderingCompany);
     if (params?.customerType) qs.set('customerType', params.customerType);
+    if (params?.sortBy) qs.set('sortBy', params.sortBy);
+    if (params?.sortDir) qs.set('sortDir', params.sortDir);
     const q = qs.toString();
     return apiClient.get<any>(`/sp/reports/cross-connects${q ? `?${q}` : ''}`, token);
   },

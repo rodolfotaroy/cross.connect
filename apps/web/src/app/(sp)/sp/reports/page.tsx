@@ -7,6 +7,20 @@ import Link from 'next/link';
 
 export const metadata: Metadata = { title: 'Reports — SP Portal' };
 
+// Maps display column header → Prisma/API field name (null = not sortable)
+const COLUMNS: { label: string; field: string | null }[] = [
+  { label: 'XC ID', field: 'crossConnectId' },
+  { label: 'Circuit ID', field: 'circuitId' },
+  { label: 'Status', field: 'status' },
+  { label: 'Ordering Company', field: 'orderingCompany' },
+  { label: 'Bandwidth', field: null },
+  { label: 'MRC', field: 'mrc' },
+  { label: 'NRC', field: 'nrc' },
+  { label: 'Billable Date', field: 'billableDate' },
+  { label: 'Year / Q', field: 'year' },
+  { label: 'Completed', field: 'dateCompleted' },
+];
+
 export default async function SpReportsPage({
   searchParams,
 }: {
@@ -18,6 +32,8 @@ export default async function SpReportsPage({
     dateFrom?: string;
     dateTo?: string;
     page?: string;
+    sortBy?: string;
+    sortDir?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -25,6 +41,9 @@ export default async function SpReportsPage({
   const token = (session?.user as any)?.accessToken as string;
 
   const page = Number(sp.page ?? '1');
+  const sortBy = sp.sortBy ?? 'createdAt';
+  const sortDir = (sp.sortDir === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc';
+
   const filters = {
     status: sp.status as any,
     year: sp.year ? Number(sp.year) : undefined,
@@ -34,6 +53,8 @@ export default async function SpReportsPage({
     dateTo: sp.dateTo,
     page,
     limit: 50,
+    sortBy,
+    sortDir,
   };
 
   const [summary, result] = await Promise.all([
@@ -43,16 +64,20 @@ export default async function SpReportsPage({
       .catch(() => ({ data: [], meta: { page: 1, limit: 50, total: 0, totalPages: 0 } })),
   ]);
 
-  // Query string for pagination links (preserves form field names)
-  const pageQs = new URLSearchParams();
-  if (sp.status) pageQs.set('status', sp.status);
-  if (sp.year) pageQs.set('year', sp.year);
-  if (sp.quarter) pageQs.set('quarter', sp.quarter);
-  if (sp.company) pageQs.set('company', sp.company);
-  if (sp.dateFrom) pageQs.set('dateFrom', sp.dateFrom);
-  if (sp.dateTo) pageQs.set('dateTo', sp.dateTo);
+  // Build shared query string (preserves all active filters + sort)
+  const sharedQs = new URLSearchParams();
+  if (sp.status) sharedQs.set('status', sp.status);
+  if (sp.year) sharedQs.set('year', sp.year);
+  if (sp.quarter) sharedQs.set('quarter', sp.quarter);
+  if (sp.company) sharedQs.set('company', sp.company);
+  if (sp.dateFrom) sharedQs.set('dateFrom', sp.dateFrom);
+  if (sp.dateTo) sharedQs.set('dateTo', sp.dateTo);
+  if (sp.sortBy) sharedQs.set('sortBy', sp.sortBy);
+  if (sp.sortDir) sharedQs.set('sortDir', sp.sortDir);
 
-  // Query string for CSV export (maps to API param names)
+  const pageQs = new URLSearchParams(sharedQs);
+
+  // CSV export query string (maps to API param names)
   const exportQs = new URLSearchParams();
   if (sp.status) exportQs.set('status', sp.status);
   if (sp.year) exportQs.set('year', sp.year);
@@ -61,6 +86,14 @@ export default async function SpReportsPage({
   if (sp.dateFrom) exportQs.set('dateFrom', sp.dateFrom);
   if (sp.dateTo) exportQs.set('dateTo', sp.dateTo);
   const exportHref = `/api/sp/export${exportQs.toString() ? `?${exportQs}` : ''}`;
+
+  // Compute previous month date range (server-side, deterministic)
+  const now = new Date();
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+  const fmt = (d: Date) => d.toISOString().split('T')[0];
+  const prevMonthLabel = prevMonthStart.toLocaleString('default', { month: 'long' });
+  const prevMonthHref = `/sp/reports?dateFrom=${fmt(prevMonthStart)}&dateTo=${fmt(prevMonthEnd)}&status=completed`;
 
   const totalMrc = Number(summary?.totalMrc ?? 0);
   const totalNrc = Number(summary?.totalNrc ?? 0);
@@ -72,13 +105,21 @@ export default async function SpReportsPage({
         title="Reports"
         subtitle="Cross-connect financial reporting &amp; analytics"
         actions={
-          <a
-            href={exportHref}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            download
-          >
-            Export CSV
-          </a>
+          <div className="flex gap-2">
+            <Link
+              href={prevMonthHref}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {prevMonthLabel} (completed)
+            </Link>
+            <a
+              href={exportHref}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              download
+            >
+              Export CSV
+            </a>
+          </div>
         }
       />
 
@@ -97,6 +138,9 @@ export default async function SpReportsPage({
 
       {/* Filters */}
       <form method="GET" className="flex flex-wrap items-end gap-3">
+        {/* Preserve sort state across filter submissions */}
+        {sp.sortBy && <input type="hidden" name="sortBy" value={sp.sortBy} />}
+        {sp.sortDir && <input type="hidden" name="sortDir" value={sp.sortDir} />}
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-gray-500">Status</label>
           <select
@@ -190,26 +234,42 @@ export default async function SpReportsPage({
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  {[
-                    'XC ID',
-                    'Circuit ID',
-                    'Status',
-                    'Ordering Company',
-                    'Bandwidth',
-                    'MRC',
-                    'NRC',
-                    'Billable Date',
-                    'Year / Q',
-                    'Completed',
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      scope="col"
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {COLUMNS.map(({ label, field }) => {
+                    if (!field) {
+                      return (
+                        <th
+                          key={label}
+                          scope="col"
+                          className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                        >
+                          {label}
+                        </th>
+                      );
+                    }
+                    const isActive = sortBy === field;
+                    const nextDir = isActive && sortDir === 'asc' ? 'desc' : 'asc';
+                    const sortQs = new URLSearchParams(sharedQs);
+                    sortQs.set('sortBy', field);
+                    sortQs.set('sortDir', nextDir);
+                    sortQs.delete('page');
+                    return (
+                      <th
+                        key={label}
+                        scope="col"
+                        className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500"
+                      >
+                        <Link
+                          href={`/sp/reports?${sortQs}`}
+                          className="inline-flex items-center gap-1 hover:text-gray-800"
+                        >
+                          {label}
+                          <span className="text-gray-400">
+                            {isActive ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                          </span>
+                        </Link>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
@@ -294,3 +354,4 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
     </div>
   );
 }
+

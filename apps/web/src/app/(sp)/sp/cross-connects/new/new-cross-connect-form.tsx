@@ -85,8 +85,8 @@ export function NewCrossConnectForm() {
           <Field label="Ticket Number" name="ticketNumber" />
           <Field label="Cable Type" name="cableType" />
           <Field label="Customer Type" name="customerType" />
-          <Field label="MRC ($)" name="mrc" type="number" step="0.01" min="0" />
-          <Field label="NRC ($)" name="nrc" type="number" step="0.01" min="0" />
+          <Field label="MRC (¥)" name="mrc" type="text" inputMode="decimal" pattern="[0-9]*(\.[0-9]{0,2})?" />
+          <Field label="NRC (¥)" name="nrc" type="text" inputMode="decimal" pattern="[0-9]*(\.[0-9]{0,2})?" />
         </div>
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700" htmlFor="notes">
@@ -132,7 +132,7 @@ export function NewCrossConnectForm() {
                 <HopField label="Room" value={hop.room} onChange={(v) => updateHop(i, 'room', v)} />
                 <HopField label="Rack" value={hop.rack} onChange={(v) => updateHop(i, 'rack', v)} />
                 <HopField
-                  label="Device"
+                  label="Rack Unit"
                   value={hop.device}
                   onChange={(v) => updateHop(i, 'device', v)}
                 />

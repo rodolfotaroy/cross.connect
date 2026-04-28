@@ -21,8 +21,16 @@ export function EditOrgForm({ org, token }: Props) {
   const [contactEmail, setContactEmail] = useState(org.contactEmail ?? '');
   const [contactPhone, setContactPhone] = useState(org.contactPhone ?? '');
   const [notes, setNotes] = useState(org.notes ?? '');
+  const [freeNrc, setFreeNrc] = useState<boolean>(
+    (org.dedicatedConfig as any)?.freeNrc ?? false,
+  );
+  const [freeMrc, setFreeMrc] = useState<boolean>(
+    (org.dedicatedConfig as any)?.freeMrc ?? false,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  const isSpOrg = orgType === 'service_partner';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +44,7 @@ export function EditOrgForm({ org, token }: Props) {
         contactEmail: contactEmail || undefined,
         contactPhone: contactPhone || undefined,
         notes: notes || undefined,
+        ...(isSpOrg && { freeNrc, freeMrc }),
       });
       router.push(`/organizations/${org.id}`);
       router.refresh();
@@ -132,6 +141,30 @@ export function EditOrgForm({ org, token }: Props) {
           onChange={(e) => setNotes(e.target.value)}
         />
       </div>
+
+      {isSpOrg && (
+        <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-3">
+          <p className="text-sm font-medium text-gray-700">Billing Exemptions</p>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={freeNrc}
+              onChange={(e) => setFreeNrc(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            Free NRC (Non-Recurring Charge waived)
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={freeMrc}
+              onChange={(e) => setFreeMrc(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            />
+            Free MRC (Monthly Recurring Charge waived)
+          </label>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-2">
         <button

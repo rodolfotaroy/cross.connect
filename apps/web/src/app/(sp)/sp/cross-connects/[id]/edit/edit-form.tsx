@@ -79,19 +79,19 @@ export function EditCrossConnectForm({ xc }: { xc: DedicatedXcDto }) {
           <Field label="Cable Type" name="cableType" defaultValue={xc.cableType ?? ''} />
           <Field label="Customer Type" name="customerType" defaultValue={xc.customerType ?? ''} />
           <Field
-            label="MRC ($)"
+            label="MRC (¥)"
             name="mrc"
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9]*(\.[0-9]{0,2})?"
             defaultValue={xc.mrc ? String(xc.mrc) : ''}
           />
           <Field
-            label="NRC ($)"
+            label="NRC (¥)"
             name="nrc"
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9]*(\.[0-9]{0,2})?"
             defaultValue={xc.nrc ? String(xc.nrc) : ''}
           />
         </div>

@@ -52,7 +52,17 @@ export class OrganizationsService {
   async create(dto: CreateOrganizationDto) {
     const exists = await this.prisma.organization.findUnique({ where: { code: dto.code } });
     if (exists) throw new ConflictException(`Organization code '${dto.code}' already in use`);
-    return this.prisma.organization.create({ data: dto });
+    const { freeNrc, freeMrc, ...orgData } = dto as any;
+    const dedicatedConfig: Record<string, unknown> =
+      freeNrc !== undefined || freeMrc !== undefined
+        ? { ...(freeNrc !== undefined && { freeNrc }), ...(freeMrc !== undefined && { freeMrc }) }
+        : {};
+    return this.prisma.organization.create({
+      data: {
+        ...orgData,
+        ...(Object.keys(dedicatedConfig).length > 0 && { dedicatedConfig }),
+      },
+    });
   }
 
   async update(id: string, dto: UpdateOrganizationDto) {
@@ -62,7 +72,21 @@ export class OrganizationsService {
       if (conflict && conflict.id !== id)
         throw new ConflictException(`Organization code '${dto.code}' already in use`);
     }
-    return this.prisma.organization.update({ where: { id }, data: dto });
+    const { freeNrc, freeMrc, ...orgData } = dto as any;
+    let updateData: Record<string, unknown> = { ...orgData };
+    if (freeNrc !== undefined || freeMrc !== undefined) {
+      const existing = await this.prisma.organization.findUnique({
+        where: { id },
+        select: { dedicatedConfig: true },
+      });
+      const currentConfig = (existing?.dedicatedConfig as Record<string, unknown>) ?? {};
+      updateData.dedicatedConfig = {
+        ...currentConfig,
+        ...(freeNrc !== undefined && { freeNrc }),
+        ...(freeMrc !== undefined && { freeMrc }),
+      };
+    }
+    return this.prisma.organization.update({ where: { id }, data: updateData });
   }
 
   async deactivate(id: string) {
