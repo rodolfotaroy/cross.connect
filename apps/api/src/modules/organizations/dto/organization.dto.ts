@@ -9,8 +9,8 @@ import {
   type CreateUserInput,
   type ListOrganizationsInput,
   type UpdateOrganizationInput,
-  type UpdateUserRoleInput,
   type UpdateUserInput,
+  type UpdateUserRoleInput,
 } from '@xc/types';
 
 export const CreateOrganizationDto = CreateOrganizationSchema;

@@ -111,7 +111,10 @@ export class OrganizationsService {
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
     // customer_admin and sp_admin may only inspect users from their own organisation.
-    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && user.orgId !== actor.orgId) {
+    if (
+      (actor.role === 'customer_admin' || actor.role === 'sp_admin') &&
+      user.orgId !== actor.orgId
+    ) {
       throw new ForbiddenException('Access denied');
     }
     return user;
@@ -126,7 +129,10 @@ export class OrganizationsService {
     }
 
     // customer_admin and sp_admin may only update users within their own organisation.
-    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
+    if (
+      (actor.role === 'customer_admin' || actor.role === 'sp_admin') &&
+      target.orgId !== actor.orgId
+    ) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.update({
@@ -175,7 +181,10 @@ export class OrganizationsService {
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
     // customer_admin and sp_admin may only deactivate users within their own organisation.
-    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
+    if (
+      (actor.role === 'customer_admin' || actor.role === 'sp_admin') &&
+      target.orgId !== actor.orgId
+    ) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.update({
@@ -189,7 +198,10 @@ export class OrganizationsService {
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
     // customer_admin and sp_admin may only reactivate users within their own organisation.
-    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
+    if (
+      (actor.role === 'customer_admin' || actor.role === 'sp_admin') &&
+      target.orgId !== actor.orgId
+    ) {
       throw new ForbiddenException('Access denied');
     }
     return this.prisma.user.update({
@@ -203,7 +215,10 @@ export class OrganizationsService {
     const target = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
     // customer_admin and sp_admin may only update users within their own organisation.
-    if ((actor.role === 'customer_admin' || actor.role === 'sp_admin') && target.orgId !== actor.orgId) {
+    if (
+      (actor.role === 'customer_admin' || actor.role === 'sp_admin') &&
+      target.orgId !== actor.orgId
+    ) {
       throw new ForbiddenException('Access denied');
     }
 

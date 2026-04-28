@@ -85,55 +85,55 @@ export default async function OrganizationDetailPage({
             <p className="px-6 py-8 text-center text-sm text-gray-400">No users yet.</p>
           ) : (
             <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Name</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Email</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Role</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                  {canManage && <th className="px-6 py-3" />}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {users.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3 font-medium text-gray-900">
-                      {u.firstName} {u.lastName}
-                    </td>
-                    <td className="px-6 py-3 text-gray-600">{u.email}</td>
-                    <td className="px-6 py-3">
-                      <Badge label={u.role.replace(/_/g, ' ')} variant="info" />
-                    </td>
-                    <td className="px-6 py-3">
-                      <Badge
-                        label={u.isActive ? 'Active' : 'Inactive'}
-                        variant={u.isActive ? 'success' : 'neutral'}
-                      />
-                    </td>
-                    {canManage && (
-                      <td className="px-6 py-3 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/organizations/${id}/users/${u.id}/edit`}
-                            className="text-xs font-medium text-brand-600 hover:text-brand-700"
-                          >
-                            Edit
-                          </Link>
-                          {u.isActive && (
-                            <DeactivateUserButton
-                              userId={u.id}
-                              userName={`${u.firstName} ${u.lastName}`}
-                              token={token}
-                            />
-                          )}
-                        </div>
-                      </td>
-                    )}
+              <table className="min-w-full divide-y divide-gray-100 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Name</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Email</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Role</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
+                    {canManage && <th className="px-6 py-3" />}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {users.map((u) => (
+                    <tr key={u.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-3 font-medium text-gray-900">
+                        {u.firstName} {u.lastName}
+                      </td>
+                      <td className="px-6 py-3 text-gray-600">{u.email}</td>
+                      <td className="px-6 py-3">
+                        <Badge label={u.role.replace(/_/g, ' ')} variant="info" />
+                      </td>
+                      <td className="px-6 py-3">
+                        <Badge
+                          label={u.isActive ? 'Active' : 'Inactive'}
+                          variant={u.isActive ? 'success' : 'neutral'}
+                        />
+                      </td>
+                      {canManage && (
+                        <td className="px-6 py-3 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Link
+                              href={`/organizations/${id}/users/${u.id}/edit`}
+                              className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                            >
+                              Edit
+                            </Link>
+                            {u.isActive && (
+                              <DeactivateUserButton
+                                userId={u.id}
+                                userName={`${u.firstName} ${u.lastName}`}
+                                token={token}
+                              />
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

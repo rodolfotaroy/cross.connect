@@ -1,9 +1,9 @@
 'use client';
 
+import type { UserDto } from '@/lib/api/organizations';
 import { orgsApi } from '@/lib/api/organizations';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import type { UserDto } from '@/lib/api/organizations';
 
 interface Props {
   orgId: string;
