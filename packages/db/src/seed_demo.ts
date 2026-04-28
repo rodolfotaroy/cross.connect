@@ -16,6 +16,19 @@
  *   npx ts-node --project tsconfig.json src/seed_demo.ts
  */
 
+import * as path from 'path';
+// Load DATABASE_URL from .env before Prisma initialises.
+// ts-node does not auto-load .env; Prisma CLI does.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const dotenv = require('dotenv') as { config: (opts?: { path?: string }) => void };
+  // Try package-level .env first, then repo root.
+  dotenv.config();
+  dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+} catch {
+  // dotenv not available — rely on environment variables being set externally
+}
+
 import * as bcrypt from 'bcryptjs';
 import {
   DedicatedXcStatus,
@@ -82,12 +95,12 @@ const XC_STATUSES: DedicatedXcStatus[] = [
 
 // Weight distribution so we have more completed/in_progress than cancelled
 const STATUS_WEIGHTS = [
-  { status: DedicatedXcStatus.draft,        weight: 5  },
-  { status: DedicatedXcStatus.submitted,    weight: 8  },
-  { status: DedicatedXcStatus.in_progress,  weight: 15 },
-  { status: DedicatedXcStatus.completed,    weight: 50 },
+  { status: DedicatedXcStatus.draft, weight: 5 },
+  { status: DedicatedXcStatus.submitted, weight: 8 },
+  { status: DedicatedXcStatus.in_progress, weight: 15 },
+  { status: DedicatedXcStatus.completed, weight: 50 },
   { status: DedicatedXcStatus.disconnected, weight: 15 },
-  { status: DedicatedXcStatus.cancelled,    weight: 7  },
+  { status: DedicatedXcStatus.cancelled, weight: 7 },
 ];
 
 function weightedStatus(i: number): DedicatedXcStatus {
@@ -268,8 +281,8 @@ async function main() {
 
   for (let i = 0; i < 800; i++) {
     const status = weightedStatus(i);
-    const year = 2021 + (i % 5);            // 2021 – 2025
-    const quarter = (i % 4) + 1;            // 1 – 4
+    const year = 2021 + (i % 5); // 2021 – 2025
+    const quarter = (i % 4) + 1; // 1 – 4
     const month = String(Math.min(quarter * 3, 12)).padStart(2, '0');
     const isCompleted = status === DedicatedXcStatus.completed;
     const isDisconnected = status === DedicatedXcStatus.disconnected;
@@ -286,18 +299,19 @@ async function main() {
     const zEndFloor = pick(FLOORS, i + 1);
     const aEndRoom = pick(ROOMS, i);
     const zEndRoom = pick(ROOMS, i + 5);
-    const aEndRack = `A-R${String(Math.floor(i / 8) % 32 + 1).padStart(2, '0')}`;
-    const zEndRack = `Z-R${String(Math.floor(i / 6) % 32 + 1).padStart(2, '0')}`;
+    const aEndRack = `A-R${String((Math.floor(i / 8) % 32) + 1).padStart(2, '0')}`;
+    const zEndRack = `Z-R${String((Math.floor(i / 6) % 32) + 1).padStart(2, '0')}`;
     const aEndPort = String((i % 48) + 1).padStart(2, '0');
     const zEndPort = String(((i + 12) % 48) + 1).padStart(2, '0');
     const salesSource = pick(SALES_SOURCES, i * 5) as string | null;
     const testReportTemplate = pick(TEST_REPORTS, i * 3) as string | null;
-    const testReport = testReportTemplate ? testReportTemplate.replace('{n}', String(i + 1).padStart(4, '0')) : null;
+    const testReport = testReportTemplate
+      ? testReportTemplate.replace('{n}', String(i + 1).padStart(4, '0'))
+      : null;
     const billableDate = hasDate ? new Date(`${year}-${month}-01`) : null;
     const disconnectionDate = isDisconnected ? new Date(`${year}-${month}-28`) : null;
     const dateCompleted = hasDate ? new Date(`${year}-${month}-15`) : null;
-    const requestedDisconnectionDate =
-      isDisconnected ? new Date(`${year}-${month}-20`) : null;
+    const requestedDisconnectionDate = isDisconnected ? new Date(`${year}-${month}-20`) : null;
 
     xcBatch.push({
       crossConnectId: `DEMO-XC-${String(i + 1).padStart(4, '0')}`,
@@ -326,7 +340,7 @@ async function main() {
       aEndFloor,
       aEndRoom,
       aEndRack,
-      aEndDevice: `DEMO-ODF-${String(Math.floor(i / 4) % 20 + 1).padStart(2, '0')}`,
+      aEndDevice: `DEMO-ODF-${String((Math.floor(i / 4) % 20) + 1).padStart(2, '0')}`,
       aEndPort,
       // Z-End
       zEndCampus,
@@ -334,11 +348,12 @@ async function main() {
       zEndFloor,
       zEndRoom,
       zEndRack,
-      zEndDevice: `DEMO-PP-${String(Math.floor(i / 6) % 20 + 1).padStart(2, '0')}`,
+      zEndDevice: `DEMO-PP-${String((Math.floor(i / 6) % 20) + 1).padStart(2, '0')}`,
       zEndPort,
-      notes: i % 5 === 0
-        ? `Auto-seeded record ${i + 1}. ${company} — ${customerType} customer. ${cableType} ${year}Q${quarter}.`
-        : null,
+      notes:
+        i % 5 === 0
+          ? `Auto-seeded record ${i + 1}. ${company} — ${customerType} customer. ${cableType} ${year}Q${quarter}.`
+          : null,
     });
   }
 
@@ -360,7 +375,9 @@ async function main() {
   const hopBatch: Prisma.DedicatedXcHopCreateManyInput[] = [];
   for (const xc of createdXcs) {
     const idx = parseInt(xc.crossConnectId.replace('DEMO-XC-', ''), 10) - 1;
-    const existing = await prisma.dedicatedXcHop.count({ where: { dedicatedCrossConnectId: xc.id } });
+    const existing = await prisma.dedicatedXcHop.count({
+      where: { dedicatedCrossConnectId: xc.id },
+    });
     if (existing > 0) continue;
 
     const hopCount = (idx % 4) + 1; // 1, 2, 3, or 4 hops
@@ -531,8 +548,7 @@ async function main() {
       category: TicketCategory.issue,
       priority: TicketPriority.critical,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Replaced with OS2 SM. Loss measured at 0.3 dB. Circuit fully operational.',
+      resolutionNote: 'Replaced with OS2 SM. Loss measured at 0.3 dB. Circuit fully operational.',
     },
     {
       subject: 'CKT-DEMO-01375 chromatic dispersion — 100G',
@@ -577,8 +593,7 @@ async function main() {
       category: TicketCategory.issue,
       priority: TicketPriority.medium,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Attenuator adjusted. Launch power verified at -0.2 dBm. Circuit cleared.',
+      resolutionNote: 'Attenuator adjusted. Launch power verified at -0.2 dBm. Circuit cleared.',
     },
     {
       subject: 'CKT-DEMO-01500 label swap after panel replacement',
@@ -789,8 +804,7 @@ async function main() {
       category: TicketCategory.access,
       priority: TicketPriority.low,
       status: TicketStatus.closed,
-      resolutionNote:
-        'OTDR results attached. Circuit shows <0.5 dB loss end to end.',
+      resolutionNote: 'OTDR results attached. Circuit shows <0.5 dB loss end to end.',
     },
     {
       subject: 'Equipment delivery — loading dock reservation 2026-04-30',
@@ -807,8 +821,7 @@ async function main() {
       category: TicketCategory.access,
       priority: TicketPriority.medium,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Robert Chen access deactivated. Priya Sharma enrolled and access activated.',
+      resolutionNote: 'Robert Chen access deactivated. Priya Sharma enrolled and access activated.',
     },
     {
       subject: 'Billing portal login failure — account locked',
@@ -817,8 +830,7 @@ async function main() {
       category: TicketCategory.access,
       priority: TicketPriority.medium,
       status: TicketStatus.closed,
-      resolutionNote:
-        'Account unlocked and temporary password issued to finance@demo.example.com.',
+      resolutionNote: 'Account unlocked and temporary password issued to finance@demo.example.com.',
     },
     {
       subject: 'LOA renewal — carrier handoff expiring in 30 days',
@@ -1023,8 +1035,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.low,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Q4 2025 report emailed. Average availability 99.95%.',
+      resolutionNote: 'Q4 2025 report emailed. Average availability 99.95%.',
     },
     {
       subject: 'IP prefix addition to BGP community NOC reference',
@@ -1065,8 +1076,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.low,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Emergency contacts updated in CRM and NOC ticketing system.',
+      resolutionNote: 'Emergency contacts updated in CRM and NOC ticketing system.',
     },
     {
       subject: 'VLAN tagging confirmation — new handoff circuits',
@@ -1075,8 +1085,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.medium,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'VLAN 100 tagging confirmed on all three circuits. Configuration verified.',
+      resolutionNote: 'VLAN 100 tagging confirmed on all three circuits. Configuration verified.',
     },
     {
       subject: 'Fire suppression test — cage impact assessment',
@@ -1093,8 +1102,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.low,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Q1 utilization report emailed. Average utilization 78%.',
+      resolutionNote: 'Q1 utilization report emailed. Average utilization 78%.',
     },
     {
       subject: 'Remote hands — SFP module replacement rack B',
@@ -1103,8 +1111,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.medium,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'SFP replaced and circuit restored. 25 minutes. Confirmation sent.',
+      resolutionNote: 'SFP replaced and circuit restored. 25 minutes. Confirmation sent.',
     },
     {
       subject: 'Remote hands — 2RU switch install SUITE-4',
@@ -1113,8 +1120,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.medium,
       status: TicketStatus.resolved,
-      resolutionNote:
-        'Switch installed per customer specifications. Completion report sent.',
+      resolutionNote: 'Switch installed per customer specifications. Completion report sent.',
     },
     {
       subject: 'Physical security audit documentation — ISO 27001',
@@ -1123,8 +1129,7 @@ async function main() {
       category: TicketCategory.other,
       priority: TicketPriority.medium,
       status: TicketStatus.closed,
-      resolutionNote:
-        'ISO 27001 certificate and physical security summary emailed.',
+      resolutionNote: 'ISO 27001 certificate and physical security summary emailed.',
     },
     {
       subject: 'April incident report — generator test micro-outage',
@@ -1208,7 +1213,9 @@ async function main() {
       await prisma.ticketComment.create({
         data: {
           ticketId,
-          body: commentBodies[(ticketsForComments.indexOf(ticketId) * 3 + c) % commentBodies.length],
+          body: commentBodies[
+            (ticketsForComments.indexOf(ticketId) * 3 + c) % commentBodies.length
+          ],
           authorId: c % 2 === 0 ? demoAdmin.id : demoAdmin2.id,
         },
       });
