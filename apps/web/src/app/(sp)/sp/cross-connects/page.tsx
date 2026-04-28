@@ -29,16 +29,6 @@ export default async function SpCrossConnectsPage({
       <PageHeader
         title="Cross Connects"
         subtitle={`${result.meta.total} record${result.meta.total !== 1 ? 's' : ''}`}
-        actions={
-          canWrite && (
-            <Link
-              href="/sp/cross-connects/new"
-              className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              + New Cross Connect
-            </Link>
-          )
-        }
       />
 
       {/* Filters */}
@@ -69,6 +59,20 @@ export default async function SpCrossConnectsPage({
         >
           Filter
         </button>
+        <a
+          href="/sp/cross-connects"
+          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+        >
+          Clear
+        </a>
+        {canWrite && (
+          <Link
+            href="/sp/cross-connects/new"
+            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            New Cross Connect
+          </Link>
+        )}
       </form>
 
       {result.data.length === 0 ? (

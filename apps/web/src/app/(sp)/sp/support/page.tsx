@@ -81,14 +81,6 @@ export default async function SpSupportPage({
       <PageHeader
         title="Support"
         subtitle="Manage support tickets and contact information"
-        actions={
-          <Link
-            href="/sp/support/new"
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-          >
-            + New Ticket
-          </Link>
-        }
       />
 
       {/* Contact Details */}
@@ -144,6 +136,12 @@ export default async function SpSupportPage({
         >
           Clear
         </a>
+        <Link
+          href="/sp/support/new"
+          className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+        >
+          New Ticket
+        </Link>
       </form>
 
       {/* Ticket list */}

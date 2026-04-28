@@ -28,20 +28,20 @@ export default async function SpOrganizationPage() {
             ? 'All service partner team members across all organizations'
             : 'Service Partner'
         }
-        actions={
-          !isSuperAdmin && (
+      />
+
+      <div>
+        <div className="mb-3 flex items-center gap-3">
+          {!isSuperAdmin && (
             <Link
               href="/sp/organization/new"
               className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
-              + Add Member
+              Add Member
             </Link>
-          )
-        }
-      />
-
-      <div>
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">Team Members ({users.length})</h2>
+          )}
+          <h2 className="text-sm font-semibold text-gray-700">Team Members ({users.length})</h2>
+        </div>
 
         {users.length === 0 ? (
           <EmptyState

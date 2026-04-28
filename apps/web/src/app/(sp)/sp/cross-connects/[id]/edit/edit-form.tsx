@@ -6,12 +6,27 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+interface Hop {
+  room: string;
+  rack: string;
+  device: string;
+  port: string;
+}
+
 export function EditCrossConnectForm({ xc }: { xc: DedicatedXcDto }) {
   const { data: session } = useSession();
   const router = useRouter();
   const token = (session?.user as any)?.accessToken as string;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hops, setHops] = useState<Hop[]>(
+    (xc.hops ?? []).map((h) => ({
+      room: h.room ?? '',
+      rack: h.rack ?? '',
+      device: h.device ?? '',
+      port: h.port ?? '',
+    })),
+  );
 
   async function execute(formData: FormData) {
     const body: any = {};
@@ -35,6 +50,14 @@ export function EditCrossConnectForm({ xc }: { xc: DedicatedXcDto }) {
     const status = formData.get('status') as string;
     if (status) body.status = status;
 
+    body.hops = hops.map((h, i) => ({
+      hopNumber: i + 1,
+      room: h.room || undefined,
+      rack: h.rack || undefined,
+      device: h.device || undefined,
+      port: h.port || undefined,
+    }));
+
     setLoading(true);
     setError('');
     try {
@@ -46,6 +69,18 @@ export function EditCrossConnectForm({ xc }: { xc: DedicatedXcDto }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function addHop() {
+    setHops((prev) => [...prev, { room: '', rack: '', device: '', port: '' }]);
+  }
+
+  function removeHop(index: number) {
+    setHops((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateHop(index: number, field: keyof Hop, value: string) {
+    setHops((prev) => prev.map((h, i) => (i === index ? { ...h, [field]: value } : h)));
   }
 
   return (
@@ -109,6 +144,48 @@ export function EditCrossConnectForm({ xc }: { xc: DedicatedXcDto }) {
         </div>
       </section>
 
+      {/* Hops */}
+      <section className="rounded-lg border border-gray-200 bg-white p-6">
+        <h2 className="mb-3 text-sm font-semibold text-gray-900">Hops</h2>
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={addHop}
+            className="rounded-md border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
+          >
+            Add Hop
+          </button>
+        </div>
+        {hops.length > 0 && (
+          <div className="space-y-6">
+            {hops.map((hop, i) => (
+              <div key={i} className="rounded-md border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase text-gray-500">Hop {i + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeHop(i)}
+                    className="text-xs text-red-500 hover:text-red-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <HopField label="Room" value={hop.room} onChange={(v) => updateHop(i, 'room', v)} />
+                  <HopField label="Rack" value={hop.rack} onChange={(v) => updateHop(i, 'rack', v)} />
+                  <HopField
+                    label="Rack Unit"
+                    value={hop.device}
+                    onChange={(v) => updateHop(i, 'device', v)}
+                  />
+                  <HopField label="Port" value={hop.port} onChange={(v) => updateHop(i, 'port', v)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="flex gap-3">
         <button
           type="submit"
@@ -157,6 +234,28 @@ function Field({
       ) : (
         <input id={name} name={name} type={type} className={cls} {...props} />
       )}
+    </div>
+  );
+}
+
+function HopField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-600">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm shadow-sm"
+      />
     </div>
   );
 }

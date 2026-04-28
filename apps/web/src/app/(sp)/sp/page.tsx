@@ -59,7 +59,7 @@ export default async function SpDashboard() {
       <PageHeader title="Dashboard" subtitle="Service Partner Portal overview" />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <SummaryCard label="Total Cross Connects" value={totalXcs} href="/sp/cross-connects" />
         <SummaryCard
           label="Completed"

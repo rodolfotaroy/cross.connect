@@ -115,14 +115,14 @@ export function NewCrossConnectForm() {
 
       {/* Hops */}
       <section className="rounded-lg border border-gray-200 bg-white p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-900">Hops</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-900">Hops</h2>
+        <div className="mb-4">
           <button
             type="button"
             onClick={addHop}
-            className="text-sm text-brand-600 hover:text-brand-700"
+            className="rounded-md border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
           >
-            + Add Hop
+            Add Hop
           </button>
         </div>
         <div className="space-y-6">

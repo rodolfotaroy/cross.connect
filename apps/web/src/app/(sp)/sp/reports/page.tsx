@@ -103,15 +103,6 @@ export default async function SpReportsPage({
       <PageHeader
         title="Reports"
         subtitle="Cross-connect financial reporting &amp; analytics"
-        actions={
-          <a
-            href={exportHref}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            download
-          >
-            Export CSV
-          </a>
-        }
       />
 
       {/* KPI Cards */}
@@ -204,7 +195,7 @@ export default async function SpReportsPage({
           href={prevMonthHref}
           className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          Completed (Previous month)
+          Previous month
         </Link>
         <button
           type="submit"
@@ -217,6 +208,13 @@ export default async function SpReportsPage({
           className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
         >
           Clear
+        </a>
+        <a
+          href={exportHref}
+          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          download
+        >
+          Export CSV
         </a>
       </form>
 
