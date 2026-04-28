@@ -92,7 +92,6 @@ export default async function SpReportsPage({
   const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
   const fmt = (d: Date) => d.toISOString().split('T')[0];
-  const prevMonthLabel = prevMonthStart.toLocaleString('default', { month: 'long' });
   const prevMonthHref = `/sp/reports?dateFrom=${fmt(prevMonthStart)}&dateTo=${fmt(prevMonthEnd)}&status=completed`;
 
   const totalMrc = Number(summary?.totalMrc ?? 0);
@@ -105,21 +104,13 @@ export default async function SpReportsPage({
         title="Reports"
         subtitle="Cross-connect financial reporting &amp; analytics"
         actions={
-          <div className="flex gap-2">
-            <Link
-              href={prevMonthHref}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              {prevMonthLabel} (completed)
-            </Link>
-            <a
-              href={exportHref}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              download
-            >
-              Export CSV
-            </a>
-          </div>
+          <a
+            href={exportHref}
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            download
+          >
+            Export CSV
+          </a>
         }
       />
 
@@ -209,6 +200,12 @@ export default async function SpReportsPage({
             <option value="4">Q4</option>
           </select>
         </div>
+        <Link
+          href={prevMonthHref}
+          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Completed (Previous month)
+        </Link>
         <button
           type="submit"
           className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
@@ -354,4 +351,3 @@ function SummaryCard({ label, value }: { label: string; value: string | number }
     </div>
   );
 }
-

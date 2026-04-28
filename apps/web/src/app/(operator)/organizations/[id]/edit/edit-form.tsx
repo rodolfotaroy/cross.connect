@@ -21,12 +21,8 @@ export function EditOrgForm({ org, token }: Props) {
   const [contactEmail, setContactEmail] = useState(org.contactEmail ?? '');
   const [contactPhone, setContactPhone] = useState(org.contactPhone ?? '');
   const [notes, setNotes] = useState(org.notes ?? '');
-  const [freeNrc, setFreeNrc] = useState<boolean>(
-    (org.dedicatedConfig as any)?.freeNrc ?? false,
-  );
-  const [freeMrc, setFreeMrc] = useState<boolean>(
-    (org.dedicatedConfig as any)?.freeMrc ?? false,
-  );
+  const [freeNrc, setFreeNrc] = useState<boolean>((org.dedicatedConfig as any)?.freeNrc ?? false);
+  const [freeMrc, setFreeMrc] = useState<boolean>((org.dedicatedConfig as any)?.freeMrc ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

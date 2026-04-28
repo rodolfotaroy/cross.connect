@@ -85,8 +85,20 @@ export function NewCrossConnectForm() {
           <Field label="Ticket Number" name="ticketNumber" />
           <Field label="Cable Type" name="cableType" />
           <Field label="Customer Type" name="customerType" />
-          <Field label="MRC (¥)" name="mrc" type="text" inputMode="decimal" pattern="[0-9]*(\.[0-9]{0,2})?" />
-          <Field label="NRC (¥)" name="nrc" type="text" inputMode="decimal" pattern="[0-9]*(\.[0-9]{0,2})?" />
+          <Field
+            label="MRC (¥)"
+            name="mrc"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9]*(\.[0-9]{0,2})?"
+          />
+          <Field
+            label="NRC (¥)"
+            name="nrc"
+            type="text"
+            inputMode="decimal"
+            pattern="[0-9]*(\.[0-9]{0,2})?"
+          />
         </div>
         <div className="mt-4">
           <label className="block text-sm font-medium text-gray-700" htmlFor="notes">
